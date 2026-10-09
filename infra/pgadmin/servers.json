@@ -1,0 +1,24 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Department DBs (read-only: rag_reader)",
+      "Group": "Aspire RAG",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "hr_db",
+      "Username": "rag_reader",
+      "SSLMode": "prefer",
+      "Comment": "hr_db, finance_db, risk_credit_db, compliance_db, support_db. Password: rag_reader"
+    },
+    "2": {
+      "Name": "App DB (rbac_rag, admin: rbac)",
+      "Group": "Aspire RAG",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "rbac_rag",
+      "Username": "rbac",
+      "SSLMode": "prefer",
+      "Comment": "users, roles, documents, data_sources, audit_log; also lists all department DBs. Password: rbac"
+    }
+  }
+}

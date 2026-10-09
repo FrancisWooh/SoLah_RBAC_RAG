@@ -1,0 +1,376 @@
+Aspire Internal Brain —— 用户权限来源设计文档
+=====================================================
+整理日期：2026-10-09
+说明：本文档描述 RBAC 三维权限（role / clearance / compartment）的原始数据可以
+      从哪些外部系统获取，以及各来源的映射方式、同步策略和优先级规则。
+      标注 [已实现] 的表示当前代码已支持；[架构预留] 表示数据模型已预留但未接入；
+      [待实现] 表示需要新增代码。
+
+
+================================================================
+一、现状回顾
+================================================================
+当前权限模型用三个维度对每次检索做三重校验（rbac_filter.py）：
+
+  维度        回答的问题               存储位置              当前来源
+  ----------- ------------------------ --------------------- ----------------
+  role        你的职能是否被允许       user_roles 表         本地数据库管理
+  clearance   你能看多敏感的内容       users.clearance       用户表字段（注册时设定）
+  compartment 你是否被划入该敏感领域   users.compartments    用户表字段（注册时设定）
+
+JWT 只信任 sub 做身份认证；三个权限维度每次请求都从 Postgres 实时读取
+（deps.py:20-24），role 有一层 30 秒 Redis 缓存（rbac.py:11），管理员变更
+后立即失效缓存使下一请求生效。
+
+UserRole 表已预留多源溯源字段：
+  source       'permanent' | 'project' | 'temporary'
+  source_ref   外部授权单号 / 项目 ID / 审批流水号（可空）
+
+这意味着系统从设计之初就考虑了从外部系统同步角色授权，只是尚未接入。
+
+
+================================================================
+二、权限来源全景
+================================================================
+用户的三维权限可以从以下 8 类系统获取。按现实企业场景排列：
+
+  序号 来源                          映射到哪个维度        当前状态
+  ---- ------------------------------ -------------------- -------------
+  1    IdP / SSO (OIDC/SAML)         role                  [已实现·模拟]
+  2    HRIS / 人员管理系统             clearance, department [架构预留]
+  3    目录服务 (LDAP/AD)             role, compartment     [待实现]
+  4    项目管理系统 (Jira/PMO)         role (project-scoped) [已实现·本地]
+  5    临时授权 / Break-Glass         role (temporary)      [已实现·本地]
+  6    数据分类标签 / DLP             compartment 定义      [架构预留]
+  7    策略引擎 (OPA/Cedar)           三个维度均可          [待实现]
+  8    审计/合规系统反向回写          clearance, role       [架构预留]
+
+
+================================================================
+三、各来源详细设计
+================================================================
+
+----------------------------------------------------------------
+3.1 IdP / SSO（OIDC / SAML）
+----------------------------------------------------------------
+映射目标：role
+当前状态：[已实现·模拟] auth.py:18 为"模拟 SSO 登录"，无密码校验。
+
+设计：
+  IdP 登录成功后返回的 ID Token / SAML Assertion 中携带 groups 或 roles claim。
+  后端按映射规则把 IdP groups 转成本地 role_id：
+
+    IdP group                  本地 role_id
+    -------------------------- ------------------------
+    aspire-finance-traders     finance_analyst
+    aspire-compliance-team      compliance_officer
+    aspire-hr-managers         hr_manager
+    aspire-platform-ops         platform_admin
+
+实现方式：
+  - 新增 IdPAdapter 接口（settings.idp_provider 配置：mock / oidc / saml）
+  - 登录流程改为：IdP 回调 → 取 claims → 查/建 User 行 → 同步 roles 到 user_roles
+  - source = 'permanent'，source_ref = IdP 的 group DN 或 group_id
+  - 同步策略：每次登录时做 full reconcile——IdP 没有的 group 对应的 role
+    标记 revoked，IdP 新增的 group 写入新行。这样 IdP 侧删人后本地立即反映。
+
+已有基础：
+  - User 表有 username/email/department，与 IdP 返回的用户属性一一对应
+  - create_access_token 已把 clearance/compartments/roles 写入 JWT（auth.py:27-34）
+  - 只需把登录端从"查 username 即放行"改为"接收 IdP 回调"
+
+优先级：最高。这是评委最容易理解的多来源场景，也是生产环境的标准做法。
+
+----------------------------------------------------------------
+3.2 HRIS / 人员管理系统（Workday / SAP SuccessFactors / 北森）
+----------------------------------------------------------------
+映射目标：clearance, department
+当前状态：[架构预留] users.clearance 和 users.department 已存在但靠 seed 设定。
+
+设计：
+  HRIS 系统维护员工档案，包含职级（job level）、部门、入职/离职日期。
+  后端按定时任务（类似 db_sync 的后台线程）从 HRIS 拉取人员变更，映射规则：
+
+    HRIS 字段                  本地字段             映射逻辑
+    -------------------------- -------------------- --------------------------------
+    job_level (L1-L8)          clearance            L1-L2 → 1, L3-L4 → 2, L5-L6 → 3, L7-L8 → 4
+    department                 users.department     直接映射
+    status (active/terminated) User 行              terminated → 标记不可登录（不删行，审计需要）
+
+实现方式：
+  - 新增 HRISAdapter（settings.hris_provider 配置：mock / workday / beisen）
+  - 后台线程 start_hris_sync()，默认每 5 分钟拉一次增量
+  - 更新 users.clearance 后立即 invalidate_effective_roles_cache（rbac.py:18）
+    使变更在 30 秒内对所有请求生效
+  - 离职用户不删 User 行（审计哈希链依赖 user_id），但 login 时拒绝
+
+已有基础：
+  - db_sync.py 已有后台同步线程的完整范式（start_db_watcher），可直接复用
+  - SyncReport 的 added/updated/removed 模型适用于人员同步
+
+优先级：高。clearance 目前完全靠 seed 脚本设定，没有任何动态来源，
+        这是"权限从哪来"问题中最需要补齐的一环。
+
+----------------------------------------------------------------
+3.3 目录服务（LDAP / Active Directory）
+----------------------------------------------------------------
+映射目标：role, compartment
+当前状态：[待实现]
+
+设计：
+  AD 的 Group / OU 是企业最经典的权限来源。两条映射线：
+
+  AD Group → role：
+    CN=Finance-Traders     → role finance_analyst
+    CN=Compliance-Officers → role compliance_officer
+    CN=HR-Managers         → role hr_manager
+
+  AD OU → compartment：
+    OU=AML-Team     → compartment 'aml'
+    OU=Finance-Core → compartment 'finance'
+    OU=Board-Office → compartment 'board'
+
+实现方式：
+  - 新增 LDAPAdapter（ldap3 库），settings.ldap_url / ldap_base_dn
+  - 同步策略与 IdP 类似：full reconcile，每次同步做差集
+  - source = 'permanent'，source_ref = AD group 的 DN
+  - compartment 同步到 users.compartments（覆盖式写入，取 AD 侧为权威）
+
+已有基础：
+  - users.compartments 是 ARRAY(String)，天然支持多值
+  - UserRole.source_ref 字段可存 AD DN 做溯源
+
+优先级：中。传统企业必备，但 hackathon demo 不一定有 AD 环境，
+        可用 mock LDAP 数据展示映射关系。
+
+----------------------------------------------------------------
+3.4 项目管理系统（Jira / Asana / 内部 PMO）
+----------------------------------------------------------------
+映射目标：role（project-scoped，自动授予和撤销）
+当前状态：[已实现·本地] project_member.py 模型已存在，加入项目自动授角色。
+
+设计：
+  项目管理系统中的项目成员关系同步到 project_members 表：
+  - 项目创建/人员加入 → 写入 project_members 行 + 对应 user_roles 行
+    （source = 'project'，source_ref = 项目 ID，end_at = project_end_at）
+  - 人员移出 → left_at 填值 + user_roles 行标记 revoked
+  - 项目结束 → 所有成员的 project role 到期
+
+  当前 project_members 表已有 joined_at / left_at / project_end_at 三个时间字段，
+  完全满足这个设计。
+
+已有基础：
+  - ProjectMember 模型（project_member.py）字段完整
+  - UserRole.source = 'project' 已在代码注释中定义（user_role.py:23）
+  - get_effective_roles 的 end_at 过期逻辑（rbac.py:58-60）天然支持项目到期
+
+实现方式（对接外部 PMO）：
+  - 新增 PMOAdapter，从 Jira/Asana API 拉项目成员
+  - 复用已有的 project_members → user_roles 同步逻辑
+  - 后台线程或 webhook 触发
+
+优先级：中。已有数据模型支撑，对接外部 API 的工作量不大，
+        但 hackathon demo 用本地项目管理已足够展示。
+
+----------------------------------------------------------------
+3.5 临时授权 / Break-Glass 流程
+----------------------------------------------------------------
+映射目标：role（temporary，带到期时间）
+当前状态：[已实现·本地] 完整的申请-审批-授予-到期流程已在运行。
+
+设计：
+  临时角色来源可以是：
+  - 内部审批工单系统（ServiceNow / 自建工单）
+  - 紧急提权流程（Break-Glass / JIT Access）
+  - 用户自助申请（已实现：role_requests API + admin 审批）
+
+  授予时写入：
+    source = 'temporary'
+    source_ref = 工单号 / 审批流水号
+    end_at = 申请的到期时间
+
+已有基础：
+  - UserRole.source = 'temporary' 已定义
+  - role_requests.py 完整的申请-审批流程
+  - get_effective_roles 实时判断 end_at 过期（rbac.py:58-60），无需后台任务
+  - source_ref 字段已预留（user_role.py:24）
+
+实现方式（对接外部工单系统）：
+  - 新增 TicketAdapter，从 ServiceNow API 拉已批准的提权工单
+  - 写入 user_roles，source_ref 存工单号
+  - 到期后 get_effective_roles 自动不计入
+
+优先级：低（当前已满足 demo 需求）。如果要在 demo 中展示"外部工单驱动提权"，
+        需要额外对接 API。
+
+----------------------------------------------------------------
+3.6 数据分类标签系统 / DLP
+----------------------------------------------------------------
+映射目标：compartment 的定义（不是用户侧属性，是文档侧属性的来源）
+当前状态：[架构预留] 文档侧的 compartments 已在 manifest.json 和 documents 表中定义。
+
+设计：
+  compartment 的标签定义不应该是人手维护的，而应来自：
+  - 文档管理系统的分类策略（SharePoint / Confluence 的分类标签）
+  - DLP 扫描结果（自动识别敏感数据后打标签）
+  - 合规标注工具（数据治理平台）
+
+  这条线映射的是文档侧（documents.compartments），不是用户侧。
+  用户侧的 compartment（users.compartments）来自 HRIS 或 LDAP（见 3.2 / 3.3）。
+
+  两者的交汇点在 rbac_filter.is_permitted()：
+    文档 compartments ⊆ 用户 compartments（rbac_filter.py:25）
+
+已有基础：
+  - Document 模型有 compartments 字段
+  - manifest.json 的 compartments 列已定义（hr/aml/finance/credit/security/legal/board）
+  - db_sync.py 的 permission_mapping 已支持 compartment_column（db_sync.py:145-146）
+
+实现方式：
+  - 新增 ClassificationAdapter，从 DLP/文档管理系统拉分类标签
+  - 更新 documents.compartments（已有字段，无需改表）
+  - library_sync 已能检测内容哈希变化后重新入库
+
+优先级：低。compartment 标签的定义来源是"文档治理"范畴，
+        与"用户权限来源"是互补关系，可在文档中说明但不急于实现。
+
+----------------------------------------------------------------
+3.7 策略引擎（OPA / Cedar / AWS IAM）
+----------------------------------------------------------------
+映射目标：三个维度均可
+当前状态：[待实现]
+
+设计：
+  当权限来源超过两个时，合并逻辑会变复杂：
+  - IdP 说有 finance_analyst，HRIS 说 clearance 应为 3，LDAP 说有 aml compartment
+  - 三个来源合并后，用户的有效权限是什么？
+
+  策略引擎的职责是做这个合并：
+  - 输入：各来源的原始权限数据
+  - 输出：合并后的 (roles, clearance, compartments)
+  - 策略用代码定义，可版本管理、可审计
+
+实现方式：
+  - 新增 PolicyEngine 接口（settings.policy_engine 配置：none / opa / cedar）
+  - 在 get_effective_roles 和 User 属性读取之间插入一层策略评估
+  - OPA 方案：部署 OPA sidecar，后端查询 /v1/data/aspire/authz
+
+已有基础：
+  - rbac_filter.is_permitted 是纯函数（rbac_filter.py:15-27），策略引擎的输出
+    只需在调用它之前准备好 permission.roles / clearance / compartments 即可
+  - PermissionContext（base.py）是策略引擎输出的天然载体
+
+优先级：低。适合多来源并存的成熟期方案，hackathon MVP 不需要。
+        但架构上没有阻塞点——is_permitted 的接口已经足够通用。
+
+----------------------------------------------------------------
+3.8 审计/合规系统反向回写
+----------------------------------------------------------------
+映射目标：clearance（降低），role（撤销）
+当前状态：[架构预留] audit_log.py 哈希链已记录全部访问行为。
+
+设计：
+  合规系统读取审计日志（可经 MCP 审计接口，mcp_server.py 已实现只读工具），
+  分析后反馈权限调整建议：
+  - 发现用户多次越权查询同一 compartment → 降低 clearance 或收回该 compartment
+  - 发现违规访问 → 立即撤销相关 role
+  - 定期合规审查 → 批量调整 clearance
+
+实现方式：
+  - 合规系统通过 MCP 审计接口读 audit_log（已有 get_user_roles / search_audit_logs 工具）
+  - 回写通过 admin REST API（已有 grant/revoke 接口）
+  - 所有调整都进 user_roles 表，source = 'permanent'，
+    source_ref 标注合规审查批次号
+
+已有基础：
+  - 审计日志哈希链完整（audit_log.py）
+  - MCP 审计接口只读（mcp_server.py），故意不提供写工具——回写走 REST API
+  - admin_roles API 已有 grant/revoke（admin_roles.py）
+
+优先级：低。这是一个反馈闭环，依赖审计数据积累，适合作为"未来展望"写入文档。
+
+
+================================================================
+四、多来源合并规则
+================================================================
+当多个来源同时写入同一维度时，需要明确合并规则：
+
+  维度        合并规则                                     权威来源
+  ----------- -------------------------------------------- --------------------
+  role        并集（取所有来源的 role 并集）               IdP 为职能角色权威，
+              临时角色叠加，到期后自动消失                 PMO 为项目角色权威
+  clearance   取最低值（防御性原则：取各来源中的最小值）   HRIS 为权威来源
+  compartment 并集（取所有来源的 compartment 并集）         LDAP/AD 为权威来源
+
+为什么 clearance 取最低值？
+  不同系统对同一用户的 clearance 可能有不同视图（HRIS 说 L4→clearance 2，
+  AD 说属于更敏感的 OU 但没设 clearance）。取最低值确保用户只能看到
+  所有系统都认为他可以看的内容。这是防御性原则——宁可拒绝多，不可泄露多。
+
+实现位置：
+  合并逻辑放在 get_effective_roles 和 User 属性读取之间（新增一层），
+  不改动 rbac_filter 的接口。合并后的 PermissionContext 传给 is_permitted 即可。
+
+
+================================================================
+五、同步策略统一设计
+================================================================
+所有外部来源的同步遵循同一套范式（复用 db_sync.py 的模式）：
+
+  策略              说明                                       失败行为
+  ----------------- ------------------------------------------ --------------------
+  Full Reconcile    每次同步做差集：来源有/本地无 → 新增      来源不可达时
+                    来源无/本地有 → 标记 revoked              不删任何数据
+  增量同步          拉取上次同步后的变更（webhook 或时间戳）   失败则下次全量
+  缓存失效          写入后立即调 invalidate_effective_roles_    确保变更在
+                    cache(redis_client, user_id)              30 秒内生效
+  审计记录          每次同步的 added/updated/removed          SyncReport
+                    写入审计日志                               已有模型
+
+后台线程范式（复用 start_db_watcher 的结构）：
+  - daemon 线程，间隔可配（settings.*_sync_interval，0 = 关闭）
+  - 首次延迟 10 秒等应用启动
+  - 异常不退出，记日志后继续下一轮
+
+
+================================================================
+六、实现优先级与路线图
+================================================================
+按 hackathon demo 的展示价值和和实现难度排序：
+
+  优先级 来源                        展示价值   实现难度   建议
+  ------- -------------------------- ---------- ---------- -----------------------
+  P0      IdP/SSO groups → roles     高         中         demo 必须展示的来源
+  P1      HRIS 职级 → clearance      高         中         补齐 clearance 的动态来源
+  P2      LDAP/AD → compartment      中         中         传统企业经典场景
+  P2      PMO → project role         中         低         已有数据模型，对接 API 即可
+  P3      临时授权工单               低         低         本地流程已完整
+  P3      DLP → 文档分类标签         低         中         文档侧，与用户侧互补
+  P4      策略引擎 (OPA)             低         高         多来源合并的成熟期方案
+  P4      合规系统反向回写           低         中         依赖审计数据积累
+
+建议 hackathon demo 聚焦 P0 + P1 两条线：
+  - P0：用 OIDC mock 演示 IdP groups 自动映射成 role
+  - P1：用 HRIS mock 演示职级变动后 clearance 实时调整
+  两条线覆盖了三个维度中的两个（role + clearance），
+  compartment 可用 seed 数据说明来自 LDAP/AD。
+
+
+================================================================
+七、涉及代码位置参考
+================================================================
+  文件                                    作用
+  --------------------------------------- ---------------------------------------
+  backend/app/models/user.py              User 表：clearance / compartments 字段
+  backend/app/models/user_role.py         UserRole 表：source / source_ref 溯源字段
+  backend/app/models/role.py             Role 表：角色定义
+  backend/app/models/project_member.py    项目成员表：project-scoped role 基础
+  backend/app/services/rbac.py            get_effective_roles + Redis 缓存
+  backend/app/services/vectorstore/      is_permitted 三重校验（不可绕过）
+    rbac_filter.py
+  backend/app/api/deps.py                get_current_user + 权限实时读取
+  backend/app/api/auth.py                登录入口（当前为模拟 SSO）
+  backend/app/services/db_sync.py        后台同步线程范式参考
+  backend/app/services/library_sync.py   SyncReport 模型参考
+  backend/app/models/audit_log.py        审计哈希链
+  backend/app/mcp_server.py              MCP 审计接口（只读，供合规系统调用）

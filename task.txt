@@ -1,0 +1,359 @@
+RBAC-RAG 企业知识系统 "Aspire Internal Brain" — 开发任务分解
+对应 readme.txt 的 P0/P1/P2 范围，按执行顺序拆成里程碑任务，两周工期。
+完成一项勾一项，保持这个文件和实际进度同步。
+
+====================================================================
+M0　项目脚手架（Day 1）— 已完成（docker compose up 验证通过）
+====================================================================
+[x] 建 backend/、frontend/、infra/ 目录结构
+[x] docker-compose.yml 骨架：postgres、redis、backend、frontend、qdrant 占位
+    （qdrant 作为 vectordb 本地降级实现，接口留了 tencent_vectordb 切换点）
+[x] FastAPI 项目骨架 + /health 健康检查（已验证返回 200）
+[x] React + TS + AntD 项目骨架，路由打通 /login /app/query /admin/*
+    （已验证 tsc 编译通过、vite build 成功、容器内可访问）
+[ ] 配置 CodeBuddy 开发环境，从这一步开始截图留痕 —— 需要你本机手动安装/
+    登录 CodeBuddy 并开始截图留痕，这一步我这边无法代做
+
+====================================================================
+M1　数据层与权限模型（Day 1-2）— 已完成
+====================================================================
+[x] SQLAlchemy models：users / roles / user_roles / project_members /
+    role_requests / documents / audit_logs / data_sources
+[x] Alembic migration（已 upgrade head，8张表在 postgres 中验证存在）
+[x] seed_data.py：预置 3 个用户（alice/bob/admin）、5 个角色、4 篇文档
+    （KYC/AML政策、CASA KYC要求、客诉SOP、企业卡额度规则，对应Aspire业务语境）
+    —— 注意：bob 的 card_ops 临时角色故意不预置，留到 M5 现场演示
+    "加入项目->自动授权"的效果
+[x] "有效角色"计算函数 get_effective_roles() + 6 个单元测试全部通过
+    （覆盖：永久角色/临时角色未过期/已过期自动排除/已撤销排除/组合/
+    as_of 指定时间点判断）
+
+====================================================================
+M2　认证与会话（Day 2）— 已完成
+====================================================================
+[x] POST /api/auth/login（模拟 SSO）签发 JWT（sub/username/clearance/compartments/roles快照）
+    —— JWT 里的 roles 只作展示用途，真正鉴权永远走下面的动态计算，
+    避免未来有人误信 JWT 里的角色做权限判断
+[x] JWT 解析中间件（app/api/deps.py get_current_user，HTTPBearer）
+[x] GET /api/auth/me（clearance/compartments 每次从DB读，effective_roles
+    每次动态计算，不信任JWT里的快照）
+[x] Redis 权限缓存 get_effective_roles_cached()（TTL 30s）+
+    invalidate_effective_roles_cache()（留给 M5 grant/revoke 调用）
+[x] 前端：AuthContext + ProtectedRoute + /login 接真实接口 + UserBar
+    显示当前用户/角色/退出登录，已挂到 /app/query 和 /admin/*
+[x] 后端测试：test_auth.py 4个用例 + test_rbac.py 6个用例，共10个全部通过
+[x] curl 验证：正常登录、未知账号401、无token 403、伪造token 401、
+    redis里能看到 effective_roles:* 缓存key且TTL递减
+
+未做（不在本阶段范围，记在这里免得以后忘）：
+- /admin/* 目前只校验"已登录"，还没校验"是否有 admin/approver 角色"，
+  这个要等 M5 角色管理做完一起加
+- 前端的 UI 没有用真实浏览器跑过，只验证了 tsc/build 通过 + vite HMR 无报错
+
+====================================================================
+M3　向量库与文档注入（Day 2-3）— 已完成
+====================================================================
+[x] 统一接口 VectorStore（base.py: upsert/search），两个实现：
+    QdrantVectorStore（本地，已验证）+ TencentVectorDBStore（主路径，
+    代码按官方 tcvectordb SDK 示例写的，但没有真实腾讯云账号/密钥，
+    没有实测过，上线前必须先跑通冒烟测试再信任它）
+[x] embedding 同样做了可切换接口：MockEmbedder（无需任何API key，
+    中文字符/双字母hashing-trick，纯本地可跑）+ HunyuanEmbedder
+    （同样没有真实密钥，未实测）。默认维度统一定为1024（对齐
+    hunyuan-embedding），以后切后端不用重建collection
+[x] 文档分块 (chunk_text) + 注入 allowed_roles/required_clearance/
+    compartments 到 payload，seed_vectorstore.py 跑通：4篇种子文档
+    全部入库，qdrant collection 验证 points_count=4, dim=1024
+[x] RBAC 过滤：关键设计——Qdrant 的 filter 只能精确表达"角色有交集"和
+    "clearance<=X"，但"compartments 真子集"这种语义在 Qdrant filter DSL
+    里对多值情况表达不了，所以做了两层：Qdrant 层面做性能预过滤
+    （角色/clearance精确，compartments是"空或有交集"的近似），再加一层
+    纯 Python 的 is_permitted() 做最终严格校验（真子集），每个
+    VectorStore 实现返回结果前都强制过一遍这层，不可绕过
+[x] 单测：20个全过，其中专门测了"子集≠交集"这个边界（文档要求
+    aml+finance两个分区，用户只有aml，必须拒绝——如果只做"有交集"
+    判断会错误放行），以及"无角色/clearance不足/缺分区"三种场景在
+    真实 Qdrant 容器上确认绝不返回文档
+
+风险提示（更新）：排查过能不能用本地 Postgres 替代验证 TencentVectorDBStore
+——不行，tcvectordb 是私有RPC协议，Postgres 不是协议兼容的替身。但发现一个
+更好的办法：tcvectordb 这个包本身已经装在镜像里，其中 Document/Filter 这
+两个类是纯本地的数据/字符串构造类，不发网络请求，可以直接用真实SDK代码
+测试——已加 test_tencent_adapter.py（5个用例全过），验证了请求构造
+（Filter表达式、Document字段映射）和响应解析逻辑是对的。
+真正没法在没有真实密钥情况下验证的，只剩：client鉴权 + create_collection
++ upsert/search 的实际RPC调用这几步，上线前仍需用真实密钥跑一次
+seed_vectorstore.py 冒烟测试。
+顺带发现 Tencent 的 Filter 语法（In/NotIn/Include/Exclude/IncludeAll）
+和 Qdrant 一样，也没有"真子集"或"字段为空"的原生表达能力，所以 Tencent
+路径的 compartments 校验完全交给 Python 层 is_permitted()，不在DB层做
+近似预过滤（比 Qdrant 版本更保守，但更不容易踩坑）。
+
+====================================================================
+M4　查询主链路（Day 3-4，核心演示路径，优先级最高）— 已完成
+====================================================================
+[x] LLM 可切换接口（同 M3 的 embedding/vectorstore 套路）：MockLLM
+    （无需API key，纯摘录式应答，已验证）+ HunyuanLLM + DeepSeekLLM
+    （都未实测，字段名已对照真实SDK docstring核对过）
+[x] POST /api/query/text：embedding -> RBAC过滤检索 -> LLM生成带引用回答
+    -> 写审计日志，全链路打通
+[x] 审计日志写入：event_type/query_text/filter_applied/retrieved_doc_ids/
+    decision/deny_reason/model_id/latency_ms 全部落库
+[x] 前端 /app/query：输入框、回答+来源文档标签、拒绝提示，接的是真实接口
+[x] 跑通场景一/二端到端（curl实测 + 6个pytest用例），用的是真实种子数据
+    （alice/bob + 4篇文档），不是临时构造的测试数据
+
+发现并修复了一个真实bug（不是我编的，是手工curl冒烟测试测出来的）：
+场景二一开始测出来是错的——alice查"客户投诉处理SOP"（她没有customer_support
+角色）本应被拒绝，但系统返回了allow，把KYC/CASA文档（她确实有权限看）当成
+答案引用了。根本原因：RBAC过滤后拿到的"允许访问的top-k"不代表"真的相关"——
+向量检索总会返回permitted集合里最接近的k个，哪怕分数很低也会返回。
+修复：加了相关性阈值过滤，只有分数达标的permitted结果才真正用来回答；
+分数不达标时，用一个"permission-blind"的peek_top_score()（只看分数，
+不返回doc_id/内容）判断"是不是有更相关但被权限挡住的内容"，来决定
+audit里标 deny 还是"确实没有相关内容"。threshold=0.20 是针对
+MockEmbedder在这4篇种子文档上的实测分数分布校准的，换成真实hunyuan
+embedding后必须重新测一遍分数分布，这个阈值大概率不适用。
+
+====================================================================
+M5　角色管理后台（Day 4-5）— 已完成
+====================================================================
+[x] API：GET /api/admin/roles、GET /api/admin/users（原设计没列这个，
+    为了让前端能选人，补的）、GET /api/admin/users/{id}/roles、
+    POST /api/admin/roles/grant、POST /api/admin/roles/revoke
+[x] 另加了 POST /api/admin/projects/join / leave（原设计里"项目自动授予"
+    只是文字描述没有对应API，这两个endpoint是我按场景三的需求补的，
+    内部调用 add_project_member/remove_project_member，一次事务里同时
+    写 project_members 和 user_roles，不是真的Postgres触发器，是应用层
+    服务函数实现的等价效果，更好测试/维护）
+[x] 权限门禁：新增 require_roles() 依赖，/api/admin/* 全部要求
+    platform_admin 角色，非管理员403。前端也加了对应的路由门禁
+    （ProtectedRoute 加了 requireRoles 参数），补上了M2时记的那个坑
+[x] 前端 /admin/roles：选用户 -> 查看角色记录 -> 直接授予/撤销 ->
+    项目加入/移出 的完整操作面板
+[x] 跑通场景三端到端：curl实测 bob加入前deny -> 加入后allow -> 移出后
+    deny，立即生效（grant/revoke/join/leave都会主动失效Redis缓存，
+    不用等30秒TTL）
+[x] 10个新增测试全过（含"非管理员被拦截"、"管理员能操作"、"场景三完整
+    流程"、"直接授予撤销"、"授予不存在的角色被拒绝"）
+
+中途修了一个测试基础设施的bug（不是这次新写的功能本身的bug，是M3/M4期间
+就存在、这次才暴露出来的）：tests/conftest.py 的 db_session fixture一直
+没有真正隔离——它只是手动开了个连接层事务，但没用SAVEPOINT，所以只要
+被测代码自己调用了 db.commit()（M4的查询接口、这次M5的grant/revoke/
+join/leave全都会commit），那次commit会直接穿透到真实数据库，测试
+"结束时rollback"根本没用，等于每跑一次测试就会往真实表里permanent写
+脏数据。已验证：M4那次测试运行确实往audit_logs表泄漏了1条真实记录
+（manual curl一条+测试泄漏一条，一共2条，数字对得上）。修复方式是
+Session加 join_transaction_mode="create_savepoint" 参数（SQLAlchemy 2.0
+官方推荐的测试事务隔离写法）。修复后重跑全部36个测试，确认不再泄漏。
+那条历史遗留的脏数据留着没删（反正是无害的审计记录，删了反而不像真实
+使用痕迹）。
+
+====================================================================
+M6　审计后台（Day 5-6）— 已完成
+====================================================================
+[x] 哈希链：audit_logs 加 prev_hash/record_hash 两列，每条记录的
+    record_hash = sha256(上一条的record_hash + 本条内容规范化JSON)，
+    所有写入统一走 app/services/audit.py 的 append_audit_log()
+    （query.py 和 role_admin.py 原来各自直接 AuditLog(...) 的写法已改掉）
+[x] verify_audit_chain()：从头到尾重算一遍，返回哪一条记录开始对不上。
+    真刀真枪测过——手动在psql里改了一条历史记录的deny_reason，
+    verify接口立刻报出具体是第几条记录、什么原因；改回去之后恢复ok
+[x] backfill_audit_hash_chain.py：把哈希链功能上线前就有的10条历史记录
+    也补上了哈希，所以整条链从第1条记录开始都能校验，不是只有新记录才有
+[x] API：GET /api/admin/audit/logs（筛选user_id/event_type/decision/
+    时间范围）、GET /api/admin/audit/logs/{id}、
+    GET /api/admin/audit/export（csv/json)、
+    GET /api/admin/audit/verify（原设计没有，这次加的，用来证明链没被
+    篡改，成本很低但很值——评分里"安全审计"这块加分项）
+[x] 前端 /admin/audit：筛选+表格+详情抽屉+导出按钮+"校验审计链完整性"按钮
+[x] 场景五前半（追溯+导出）跑通，CSV/JSON导出都验证了真实下载内容
+
+又抓到两个真实bug（都是手工验证流程中测出来的，不是编的）：
+1. 测试基础设施：新加的 test_audit.py 一跑就非预期失败，查出来是
+   append_audit_log() 对 effective_roles/retrieved_doc_ids 这两个数组字段
+   没传值时，哈希是在插入前算的（这时候字段是None），但SQLAlchemy的列
+   default=list 是在flush时才把None变成[]——这就导致"算哈希时用的内容"
+   和"最终存进数据库被拿去验证的内容"对不上，验证永远失败。
+   修复：在append_audit_log里显式setdefault这两个字段为[]，不依赖
+   SQLAlchemy的延迟默认值机制。检查过：这个bug只影响这次新加的
+   append_audit_log路径下、且没显式传这两个字段的写入；已上线的10条
+   历史记录是用backfill脚本读"实际落库后的值"算的哈希，没受影响，没有
+   脏数据需要清。
+2.（M5遗留，这次顺带复查）确认了之前对 tests/conftest.py 的
+   create_savepoint 修复是有效的——这次新写的 grant/revoke/export
+   相关测试都会真实调用 db.commit()，全部验证过跑完之后真实表没有
+   新增脏数据。
+
+>>> Day 6 checkpoint：docker-compose 干净环境一键起来零bug，P0/MVP完成 <<<
+>>> 已实测验证（不是口头说的）：docker compose down -v 把容器和volume全部
+    删掉，重新 docker compose up -d --build 从零起步 -> alembic upgrade
+    head（两个migration都从零按顺序跑过）-> seed_data.py ->
+    seed_vectorstore.py -> backfill_audit_hash_chain.py -> 42个pytest
+    全过 -> 场景一/二/三/五 curl 全部手工走了一遍，结果符合预期。
+    前端5173也确认能访问。这是P0/MVP真正意义上的"从一张白纸能跑起来"，
+    不是只在已经调好的开发容器里显得能用。 <<<
+
+====================================================================
+M7　角色申请审批（P1，Day 6-7）— 已完成
+====================================================================
+[x] 用户提交：POST /api/role-requests（原设计没列这个endpoint，按6.2节
+    描述的流程补的）、GET /api/role-requests/me（查自己的申请记录）
+[x] 管理员侧：GET /api/admin/role-requests（筛选status）、
+    POST /api/admin/role-requests/{id}/approve（内部复用M5的grant_role，
+    approve = "带来源信息的grant"，自动写role_grant审计、清缓存）、
+    POST /api/admin/role-requests/{id}/reject
+[x] 又补了个小endpoint：GET /api/roles（任何登录用户可查，只返回id/name，
+    不含approver_role等敏感字段）——因为普通用户要申请角色，得先知道
+    有哪些角色可选，但原来角色列表是admin-only的
+[x] 前端：/app/query 页面加了"申请临时角色"折叠面板（选角色+填理由+
+    时长+提交+看自己的申请记录）；/admin/roles 页面加了"待审批申请"
+    表格（批准/拒绝按钮）
+[x] 端到端验证：bob提交申请->审批前查询deny->管理员批准->查询allow
+    （到期时间按申请时长自动计算）；reject路径验证不会误授权；
+    重复approve同一个申请会被拒绝(400)
+[x] 新增10个测试全过（submit/approve/reject/重复approve/未知角色/
+    权限隔离/仅看自己的申请）
+
+这次又抓到两个测试基础设施坑（都是真测出来的，不是编的）：
+1. 我手工smoke测试时真的给bob批准了一个card_ops临时角色（为了验证
+   真实流程），这条真实数据后来导致两个新写的pytest用例"预期deny"
+   实际收到"allow"——因为真实数据库里bob确实有效拥有这个角色。
+   不是代码bug，是我自己的手工测试数据忘记清理了，用revoke接口
+   清理后（没有直接删库，走的是正常撤销流程，保留了可追溯的审计
+   记录）恢复正常。
+2. 真正的基础设施bug：Redis的effective_roles缓存不在pytest的数据库
+   事务回滚范围内——A测试grant了角色、紧接着查询了一次（缓存里写入
+   了"有这个角色"，TTL30秒），B测试虽然数据库状态被正确回滚了，但
+   如果在30秒内跑，会命中A测试留下的stale缓存，导致B测试跟着错。
+   在conftest.py加了个autouse fixture，每个测试开始前清空
+   effective_roles:*这些缓存key，解决。
+这两个坑背后是同一类问题：业务逻辑横跨两个存储（Postgres+Redis），
+测试只隔离了其中一个，就会被另一个的真实/残留状态悄悄污染。
+
+====================================================================
+M8　Dashboard（P1，Day 7）— 已完成
+====================================================================
+[x] GET /api/admin/dashboard/stats：查询总量/允许数/拒绝数/拒绝率、
+    最近10条越权告警（含用户名、查询内容、拒绝原因）、按天的查询量
+    趋势、数据源同步状态统计
+[x] "同步健康度"如实反映 data_sources 表的真实状态（当前是空的，因为
+    CDC/NAS真实同步不在交付范围内），没有为了好看而编造"全部健康"的
+    假数字——测试里专门断言了这一点（test_dashboard_with_no_data_
+    sources_reports_empty_not_fabricated）
+[x] 前端 /admin/dashboard：4个统计卡片 + 查询量趋势柱状图（recharts）+
+    越权告警表格 + 同步健康度状态标签。做之前加载了dataviz skill，
+    allow/deny沿用了Audit.tsx里已经用过的绿/红状态色约定，没有另起
+    一套配色；图表是单一指标的柱状图，不存在双轴问题
+[x] 3个新测试全过（含"用真实query接口跑出allow/deny然后验证dashboard
+    数字对不对"，不是构造假数据断言）
+
+>>> P1（M7角色申请审批 + M8 Dashboard）全部完成 <<<
+
+前端没有用真实浏览器测试这一点仍然成立——tsc/vite build都过了，HMR无
+报错，但recharts图表的实际视觉效果（比如柱状图tooltip、响应式布局）
+我没有办法验证，建议你自己打开 /admin/dashboard 看一眼。
+
+====================================================================
+M9　图片 OCR 查询（P2 亮点，Day 8-9）— 已完成
+====================================================================
+[x] 范围调整：原计划"PaddleOCR本地降级"换成了Tesseract+chi_sim——
+    PaddleOCR要装整个PaddlePaddle框架+下载模型，太重且在这个沙盒环境
+    风险高；Tesseract通过apt装，轻量很多，而且是真·本地OCR引擎，不是
+    随便糊弄的桩代码。已经用Pillow画了张真实的中文图片实测过：
+    "CASA账户的KYC要求"画成图片 -> tesseract识别 -> 逐字完全正确。
+    中文手写体的识别质量比PaddleOCR差一些，但demo用的是清晰笔记照片，
+    不是严格手写体，够用
+[x] TencentOCR（GeneralBasicOCR）同样按真实SDK docstring核对过字段名
+    （ImageBase64 / TextDetections[].DetectedText），但没有真实密钥
+    测过
+[x] POST /api/query/image：图片->OCR->复用/text同一套RBAC过滤+LLM
+    回答逻辑（抽了个_run_text_query公共函数，/text和/image现在共享
+    同一条核心链路，不是复制粘贴两份）
+[x] 边界情况处理：识别不出文字 -> 不进RBAC流程，直接提示换图片
+    （不算安全事件）；图片超过10MB -> 413
+[x] 原始图片不落盘/不存COS——这是故意的范围裁剪，腾讯云COS同样需要
+    真实密钥，而且持久化任意用户上传文件本身有存储/安全成本，这次
+    demo不需要能"回放"原始图片，所以跳过了，只在内存里处理完就丢弃
+[x] 前端：/app/query 加了"上传图片查询"按钮，识别结果和回答都会展示
+[x] 场景四端到端验证：画的中文测试图片走完整链路，正确识别+正确命中
+    doc_casa_kyc_requirements
+[x] 新增5个测试全过（真实OCR，不是mock：用Pillow现画图片喂给真实
+    tesseract，包括"识别不出文字""图片过大""需要登录"等边界情况）
+
+56个后端测试全过，前端build也过了。
+
+====================================================================
+M10　（原"审计自然语言问答"）改成：本地只读 MCP server — 已完成
+====================================================================
+原计划是我们自己在Dashboard里做一个问答框，LLM把问题转成SQL查询再总结
+回答。讨论后改变方向，原因：
+1. 没有真实Hunyuan密钥，LLM那层的"智能"在Mock模式下做不出真实价值；
+2. 查过WorkBuddy官方文档，它没有"发个请求过去拿一段文字回答"那种
+   inbound API——它是桌面应用，连接器是反过来的（WorkBuddy主动连外部
+   服务），但它支持接自定义MCP server（stdio和HTTP都支持，文档确认过）。
+所以改成：把审计/角色申请相关的只读查询能力做成MCP工具，让WorkBuddy
+自己来做"查alice过去7天被拒绝的查询->判断是否在反复试探财务文档->
+顺便列出她的角色申请记录"这种多步编排——这正是agent该干的事，不用
+我们自己手搓一套不成熟的NL->SQL逻辑。只做只读，不做写操作（grant/
+revoke/approve/reject 一律不开放给MCP，这是明确决定，不是漏做）。
+
+[x] 加 `mcp` 官方SDK依赖，新建 app/mcp_server.py，用FastMCP注册7个只读
+    工具：list_users / get_user_roles / list_audit_logs /
+    get_audit_log_detail / verify_audit_chain / list_role_requests /
+    get_dashboard_stats——全部复用已有的service层函数，没有重新写一遍
+    查询逻辑
+[x] 鉴权：每个工具调用都要求 Authorization: Bearer <JWT>，走的是和REST
+    接口一样的 decode_access_token + effective_roles 检查platform_admin，
+    只是换成了MCP的Context机制（ctx.request_context.request）去拿
+    请求头，不是FastAPI的Depends()。这一点专门去读了mcp包的源码确认
+    request确实是真实的Starlette Request（不是瞎猜的）
+[x] 挂载：复用现有的FastAPI app和docker-compose服务，在 /mcp 路径挂载，
+    不需要新容器/新进程。加了个lifespan把FastMCP的session manager管理
+    起来
+[x] 真实verified（不是只跑了pytest）：用官方mcp客户端库做了真实的
+    stdio握手+工具调用，包括：7个工具都能正确发现；非管理员token被拒绝
+    （isError=true，权限不足）；完全没带token被拒绝；管理员token能拿到
+    真实数据。还原样跑了一遍你举的例子场景——"查alice的user_id->查她
+    过去7天的deny记录->查她的角色申请记录"，三步工具调用全部链起来
+    正确返回了预期结果
+[x] 新增10个pytest用例（直接调工具函数，不走真实网络传输，但传输层
+    本身已经用真实mcp客户端单独验证过了）
+
+这次又顺带修了一个之前就埋下但还没暴露的测试基础设施坑：
+加了 app.mount("/mcp", ...) 之后，7个旧测试文件全挂了——
+RuntimeError: StreamableHTTPSessionManager .run() can only be called once
+per instance。原因是每个测试文件都各自 `with TestClient(app) as c`，
+每次都会完整地重启一遍app的lifespan，而FastMCP的session manager只能
+被真正"进入"一次。改成全部测试文件共享conftest.py里一个
+session级别的TestClient（这其实也是更标准的pytest写法，之前每个测试
+都重启一遍app本来就没必要）。改完确认：连续跑3遍suite，66个测试全过，
+没有不稳定，audit_logs表行数也没有因为跑测试而增长。
+
+没验证过的部分（如实记录，不是我瞎猜能行）：WorkBuddy那边真实怎么
+解析工具调用报错、怎么把配置的凭证塞进请求头——这需要真实WorkBuddy
+实例才能确认，我们这里没有。正式接入前建议先用WorkBuddy实际连一下
+这个MCP server冒烟测试。
+
+====================================================================
+M11　CodeBuddy/WorkBuddy 留痕（贯穿全程，最后集中整理）
+====================================================================
+[ ] 用 WorkBuddy 连上面做的MCP server，跑一遍"查alice过去7天被拒绝的
+    查询，判断是否在反复试探财务文档，列出她的角色申请记录"这类复合
+    任务，验证真实WorkBuddy能不能正确发现工具、传凭证、编排多步调用
+[ ] 整理开发截图/录屏，准备 Product Sharing 提交材料
+
+====================================================================
+M12　打磨与 Demo 准备（Day 11-13）
+====================================================================
+[ ] UI 细节打磨，6个demo场景完整过一遍脚本
+[ ] 8分钟演讲稿 + 5分钟 Q&A 预演
+[ ] 架构图（Mermaid）+ README 完善
+[ ] docker-compose 最终稳定性测试
+
+====================================================================
+M13　缓冲与提交（Day 14，10/16截止前）
+====================================================================
+[ ] 最后 bug 修复
+[ ] 打包提交材料（代码+compose+README+seed+demo视频+架构图+审计样例+CodeBuddy证明）

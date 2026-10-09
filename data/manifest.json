@@ -1,0 +1,1119 @@
+[
+  {
+    "id": "P01",
+    "path": "public/Company_Overview.pdf",
+    "filename": "Company_Overview.pdf",
+    "format": "pdf",
+    "department": "Public",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/public/Company_Overview.pdf",
+    "size_bytes": 5674,
+    "content_hash": "0d7c5fabdf7601330579c21bd72c7c709efd040d54386e1456e668c3f6083426"
+  },
+  {
+    "id": "P02",
+    "path": "public/Employee_Handbook.pdf",
+    "filename": "Employee_Handbook.pdf",
+    "format": "pdf",
+    "department": "Public",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/public/Employee_Handbook.pdf",
+    "size_bytes": 5250,
+    "content_hash": "0628f050a11aa87e9c7dbadb8738a5411b44666087142a1653c097d34274361d"
+  },
+  {
+    "id": "P03",
+    "path": "public/Office_Locations_Holidays.md",
+    "filename": "Office_Locations_Holidays.md",
+    "format": "md",
+    "department": "Public",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/public/Office_Locations_Holidays.md",
+    "size_bytes": 3382,
+    "content_hash": "2b8ad41929f72a80e6db5123c2e1219a2cf1c153e8c2bbc57061e203c7be3f69"
+  },
+  {
+    "id": "P04",
+    "path": "public/Data_Classification_Policy.pdf",
+    "filename": "Data_Classification_Policy.pdf",
+    "format": "pdf",
+    "department": "Public",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/public/Data_Classification_Policy.pdf",
+    "size_bytes": 5733,
+    "content_hash": "602b19d6133ac8564b04e766a2990182fa5730471706dcfd722211e16290e277"
+  },
+  {
+    "id": "P05",
+    "path": "public/Vendor_Newsletter_Oct2026.md",
+    "filename": "Vendor_Newsletter_Oct2026.md",
+    "format": "md",
+    "department": "Public",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/public/Vendor_Newsletter_Oct2026.md",
+    "size_bytes": 3685,
+    "content_hash": "9c675a5fe4236e536b397f4cb95d6a8bb97faaa1e9987ed1103c54727621b677"
+  },
+  {
+    "id": "C01",
+    "path": "compliance/KYC_AML_Policy_v3.docx",
+    "filename": "KYC_AML_Policy_v3.docx",
+    "format": "docx",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "compliance_officer"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "aml"
+    ],
+    "version": "v3.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/KYC_AML_Policy_v3.docx",
+    "size_bytes": 39129,
+    "content_hash": "5ab614b48788daa5e1c8a77df39bef67bf2e3ea0cc79f3413d893190fbcaf74f"
+  },
+  {
+    "id": "C01a",
+    "path": "compliance/archive/KYC_AML_Policy_v2.docx",
+    "filename": "KYC_AML_Policy_v2.docx",
+    "format": "docx",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "compliance_officer"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "aml"
+    ],
+    "version": "v2.0",
+    "status": "archived",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/archive/KYC_AML_Policy_v2.docx",
+    "size_bytes": 38158,
+    "content_hash": "b5039539c3630285f4a7129d3633b2804dbc520be6020cd85ef666f724834ead"
+  },
+  {
+    "id": "C02",
+    "path": "compliance/CASA_KYC_Requirements.docx",
+    "filename": "CASA_KYC_Requirements.docx",
+    "format": "docx",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "compliance_officer"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "aml"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/CASA_KYC_Requirements.docx",
+    "size_bytes": 38415,
+    "content_hash": "74f4862935648bb1b1d75a0a433a2e4a3b4e2dfbc599b434c4e3b3f7f8bc8699"
+  },
+  {
+    "id": "C03",
+    "path": "compliance/Sanctions_Screening_Procedure.docx",
+    "filename": "Sanctions_Screening_Procedure.docx",
+    "format": "docx",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "compliance_officer"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "aml"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/Sanctions_Screening_Procedure.docx",
+    "size_bytes": 38577,
+    "content_hash": "5f89cf91b0332976342d3fb6e0b64686816237e653ab2b515c02e28d40eeaf75"
+  },
+  {
+    "id": "C04",
+    "path": "compliance/STR_Filing_Guideline.pdf",
+    "filename": "STR_Filing_Guideline.pdf",
+    "format": "pdf",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "compliance_officer"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "aml"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/STR_Filing_Guideline.pdf",
+    "size_bytes": 5413,
+    "content_hash": "2fdf5b7d20a0c1fd76b6b96b2bdcfb68c4546ac84d3d76f92f1f4d48539d0ce3"
+  },
+  {
+    "id": "C05",
+    "path": "compliance/MAS_Notice_626_Summary.pdf",
+    "filename": "MAS_Notice_626_Summary.pdf",
+    "format": "pdf",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "compliance_officer",
+      "risk_analyst",
+      "legal_counsel"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/MAS_Notice_626_Summary.pdf",
+    "size_bytes": 4902,
+    "content_hash": "a36b20d8bdb469fb4130d75d68ac7bdae0843a2eb32f68ee05e555269fbb23b0"
+  },
+  {
+    "id": "C06",
+    "path": "compliance/Annual_Compliance_Training.pptx",
+    "filename": "Annual_Compliance_Training.pptx",
+    "format": "pptx",
+    "department": "Compliance",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/compliance/Annual_Compliance_Training.pptx",
+    "size_bytes": 50169,
+    "content_hash": "37a1bc6c90fb6ef81adddbd0ba40d46d9eff3beb83945d03f51358e48df9b92f"
+  },
+  {
+    "id": "R01",
+    "path": "risk_credit/Credit_Limit_Assessment_Model.docx",
+    "filename": "Credit_Limit_Assessment_Model.docx",
+    "format": "docx",
+    "department": "Risk & Credit",
+    "project": "",
+    "allowed_roles": [
+      "risk_analyst"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "credit"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/risk_credit/Credit_Limit_Assessment_Model.docx",
+    "size_bytes": 39145,
+    "content_hash": "a476d6e1d2aafb6ee71246ce786e9294687572b3cb486b2c855a72eb457f67a0"
+  },
+  {
+    "id": "R02",
+    "path": "risk_credit/SME_Risk_Scorecard.xlsx",
+    "filename": "SME_Risk_Scorecard.xlsx",
+    "format": "xlsx",
+    "department": "Risk & Credit",
+    "project": "",
+    "allowed_roles": [
+      "risk_analyst"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "credit"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/risk_credit/SME_Risk_Scorecard.xlsx",
+    "size_bytes": 9708,
+    "content_hash": "7a5a4e9a247cddc8151c1261619886bf4f8d86eec86b4724eb4fd117a1033f49"
+  },
+  {
+    "id": "R03",
+    "path": "risk_credit/Fraud_Rules_Playbook.md",
+    "filename": "Fraud_Rules_Playbook.md",
+    "format": "md",
+    "department": "Risk & Credit",
+    "project": "",
+    "allowed_roles": [
+      "risk_analyst",
+      "card_ops"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/risk_credit/Fraud_Rules_Playbook.md",
+    "size_bytes": 4192,
+    "content_hash": "a77d2572cc65182959cd5f6bf3b4b9cc9305d8947745697f370a2dfb8e142db5"
+  },
+  {
+    "id": "R04",
+    "path": "risk_credit/Collections_Policy.pdf",
+    "filename": "Collections_Policy.pdf",
+    "format": "pdf",
+    "department": "Risk & Credit",
+    "project": "",
+    "allowed_roles": [
+      "risk_analyst",
+      "customer_support"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/risk_credit/Collections_Policy.pdf",
+    "size_bytes": 5513,
+    "content_hash": "c4d5ae29b064891b4de6cb2861905f30895f61a385b32ce57c027f5279068f2e"
+  },
+  {
+    "id": "K01",
+    "path": "card_ops/Card_Limit_Adjustment_Rules.docx",
+    "filename": "Card_Limit_Adjustment_Rules.docx",
+    "format": "docx",
+    "department": "Card Operations",
+    "project": "",
+    "allowed_roles": [
+      "card_ops"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/card_ops/Card_Limit_Adjustment_Rules.docx",
+    "size_bytes": 38816,
+    "content_hash": "a75a976d69313984ba884e25690cc2e44a192a4cc8c7bd12470aec9df6c0ef5d"
+  },
+  {
+    "id": "K02",
+    "path": "card_ops/Card_Dispute_Chargeback_SOP.pdf",
+    "filename": "Card_Dispute_Chargeback_SOP.pdf",
+    "format": "pdf",
+    "department": "Card Operations",
+    "project": "",
+    "allowed_roles": [
+      "card_ops",
+      "customer_support"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/card_ops/Card_Dispute_Chargeback_SOP.pdf",
+    "size_bytes": 5486,
+    "content_hash": "4a37ce3a6a52e65829e7e7142b74e4f3f1b3f1543a2b007de5988d2f0b027ac8"
+  },
+  {
+    "id": "K03",
+    "path": "card_ops/Scheme_Rules_Summary.pdf",
+    "filename": "Scheme_Rules_Summary.pdf",
+    "format": "pdf",
+    "department": "Card Operations",
+    "project": "",
+    "allowed_roles": [
+      "card_ops"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/card_ops/Scheme_Rules_Summary.pdf",
+    "size_bytes": 5452,
+    "content_hash": "8cac9e7e2f22f8c44e3975a47ea7e8a26ba975edd6d8a633d98e8c6296e725de"
+  },
+  {
+    "id": "S01",
+    "path": "customer_support/Complaint_Handling_SOP.docx",
+    "filename": "Complaint_Handling_SOP.docx",
+    "format": "docx",
+    "department": "Customer Support",
+    "project": "",
+    "allowed_roles": [
+      "customer_support"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/customer_support/Complaint_Handling_SOP.docx",
+    "size_bytes": 38674,
+    "content_hash": "a911ad4ca5f6fe7fdd53e11980227fb2df9fae041f6a8be96b2897c2ecda96d7"
+  },
+  {
+    "id": "S02",
+    "path": "customer_support/FAQ_Account_Opening.md",
+    "filename": "FAQ_Account_Opening.md",
+    "format": "md",
+    "department": "Customer Support",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/customer_support/FAQ_Account_Opening.md",
+    "size_bytes": 3816,
+    "content_hash": "e8e92275f9c95df91cf0d431c38916eba3b5dba038f5677f1a8a670708f2401d"
+  },
+  {
+    "id": "S03",
+    "path": "customer_support/Escalation_Matrix.xlsx",
+    "filename": "Escalation_Matrix.xlsx",
+    "format": "xlsx",
+    "department": "Customer Support",
+    "project": "",
+    "allowed_roles": [
+      "customer_support",
+      "card_ops"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/customer_support/Escalation_Matrix.xlsx",
+    "size_bytes": 8647,
+    "content_hash": "78c753887abd4e61f0ffbe8308b041a564428a0445adf3379f708af427ac50ef"
+  },
+  {
+    "id": "F01",
+    "path": "finance/Expense_Policy.pdf",
+    "filename": "Expense_Policy.pdf",
+    "format": "pdf",
+    "department": "Finance",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/finance/Expense_Policy.pdf",
+    "size_bytes": 6140,
+    "content_hash": "30cd9bfed98f7a8eeec9257cb22d64e61f6a7848c39bb7fe82c968b58165dd87"
+  },
+  {
+    "id": "F02",
+    "path": "finance/Invoice_Approval_Workflow.pdf",
+    "filename": "Invoice_Approval_Workflow.pdf",
+    "format": "pdf",
+    "department": "Finance",
+    "project": "",
+    "allowed_roles": [
+      "finance_analyst"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/finance/Invoice_Approval_Workflow.pdf",
+    "size_bytes": 5697,
+    "content_hash": "1256661583a9be43c69df18c0f4a259805da23f8b8336dab300047b323d62248"
+  },
+  {
+    "id": "F03",
+    "path": "finance/Revenue_Recognition_Policy.docx",
+    "filename": "Revenue_Recognition_Policy.docx",
+    "format": "docx",
+    "department": "Finance",
+    "project": "",
+    "allowed_roles": [
+      "finance_analyst"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "finance"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/finance/Revenue_Recognition_Policy.docx",
+    "size_bytes": 39119,
+    "content_hash": "d53419af67ffd81bf3f45d1593c302671641fdc2fd1fcc45a0ecd57a1032a11a"
+  },
+  {
+    "id": "F04",
+    "path": "finance/Q3_Management_Accounts.xlsx",
+    "filename": "Q3_Management_Accounts.xlsx",
+    "format": "xlsx",
+    "department": "Finance",
+    "project": "",
+    "allowed_roles": [
+      "finance_analyst"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "finance"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/finance/Q3_Management_Accounts.xlsx",
+    "size_bytes": 9478,
+    "content_hash": "b93946616f24012303ae3392d4bea48aff79305b500e5396cfb3b23059de8c95"
+  },
+  {
+    "id": "F05",
+    "path": "finance/Budget_FY2027_Draft.xlsx",
+    "filename": "Budget_FY2027_Draft.xlsx",
+    "format": "xlsx",
+    "department": "Finance",
+    "project": "",
+    "allowed_roles": [
+      "finance_analyst"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "finance"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/finance/Budget_FY2027_Draft.xlsx",
+    "size_bytes": 9278,
+    "content_hash": "fcf745caceb807c5239c27b32e05480102927c6b7eb748174a92137ee39a829d"
+  },
+  {
+    "id": "H01",
+    "path": "hr/Leave_Policy_Admin_Guide.docx",
+    "filename": "Leave_Policy_Admin_Guide.docx",
+    "format": "docx",
+    "department": "HR",
+    "project": "",
+    "allowed_roles": [
+      "hr_manager"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "hr"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/hr/Leave_Policy_Admin_Guide.docx",
+    "size_bytes": 39301,
+    "content_hash": "42fad0199d198c17ece59755fd59d7e28e1485d56f08cee61c4d672e2bc03e13"
+  },
+  {
+    "id": "H02",
+    "path": "hr/Compensation_Bands.xlsx",
+    "filename": "Compensation_Bands.xlsx",
+    "format": "xlsx",
+    "department": "HR",
+    "project": "",
+    "allowed_roles": [
+      "hr_manager"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "hr"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/hr/Compensation_Bands.xlsx",
+    "size_bytes": 7763,
+    "content_hash": "313187425fcf23db4a6a245a4aced725f7ef52629c37cc4250e2e3dd79829c5d"
+  },
+  {
+    "id": "H03",
+    "path": "hr/Performance_Review_Guide.docx",
+    "filename": "Performance_Review_Guide.docx",
+    "format": "docx",
+    "department": "HR",
+    "project": "",
+    "allowed_roles": [
+      "hr_manager"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "hr"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/hr/Performance_Review_Guide.docx",
+    "size_bytes": 38816,
+    "content_hash": "82e4a9b3e1e8f7d5080f145e5caf31e44ae512914ceef4674a2adacc61958f5f"
+  },
+  {
+    "id": "H04",
+    "path": "hr/Onboarding_Checklist.md",
+    "filename": "Onboarding_Checklist.md",
+    "format": "md",
+    "department": "HR",
+    "project": "",
+    "allowed_roles": [
+      "hr_manager"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "hr"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/hr/Onboarding_Checklist.md",
+    "size_bytes": 3333,
+    "content_hash": "7e667bf32ec549422d920e2e9672eb7c97ba78d4e1691348b622d3b58642e218"
+  },
+  {
+    "id": "H05",
+    "path": "hr/Remote_Work_Policy.pdf",
+    "filename": "Remote_Work_Policy.pdf",
+    "format": "pdf",
+    "department": "HR",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/hr/Remote_Work_Policy.pdf",
+    "size_bytes": 5041,
+    "content_hash": "0a21ac1177092fd48375436ee85fafa4b389dae31c02e8fddf54d0414ef8ab5e"
+  },
+  {
+    "id": "M01",
+    "path": "marketing/Brand_Guidelines.pdf",
+    "filename": "Brand_Guidelines.pdf",
+    "format": "pdf",
+    "department": "Marketing",
+    "project": "",
+    "allowed_roles": [
+      "employee"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/marketing/Brand_Guidelines.pdf",
+    "size_bytes": 5865,
+    "content_hash": "5d9cb2b15a448f5043302055cc409062e532b987cb745b69dc505a73dddb2ee7"
+  },
+  {
+    "id": "M02",
+    "path": "marketing/Campaign_Plan_VN_Launch.pptx",
+    "filename": "Campaign_Plan_VN_Launch.pptx",
+    "format": "pptx",
+    "department": "Marketing",
+    "project": "",
+    "allowed_roles": [
+      "marketing_manager"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/marketing/Campaign_Plan_VN_Launch.pptx",
+    "size_bytes": 48693,
+    "content_hash": "b85f4a3744e0314f52fc14ab1f9d0aac40b5274b33ae3f507632a35ad5c7cb14"
+  },
+  {
+    "id": "M03",
+    "path": "marketing/Competitor_Analysis_2026.pdf",
+    "filename": "Competitor_Analysis_2026.pdf",
+    "format": "pdf",
+    "department": "Marketing",
+    "project": "",
+    "allowed_roles": [
+      "marketing_manager",
+      "account_manager",
+      "exec"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/marketing/Competitor_Analysis_2026.pdf",
+    "size_bytes": 5905,
+    "content_hash": "93b84796cac294f61864a190d7adc3a2d75324ee3ee60fa2cb4c85f1beb91eb8"
+  },
+  {
+    "id": "M04",
+    "path": "marketing/Press_Release_Template.docx",
+    "filename": "Press_Release_Template.docx",
+    "format": "docx",
+    "department": "Marketing",
+    "project": "",
+    "allowed_roles": [
+      "marketing_manager"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/marketing/Press_Release_Template.docx",
+    "size_bytes": 38797,
+    "content_hash": "703ad3450213d0996dbf5edafab75c89526fdd49dc6b0af621092ec61a326e30"
+  },
+  {
+    "id": "A01",
+    "path": "sales_partnerships/Pricing_and_Fee_Schedule.pdf",
+    "filename": "Pricing_and_Fee_Schedule.pdf",
+    "format": "pdf",
+    "department": "Sales & Partnerships",
+    "project": "",
+    "allowed_roles": [
+      "account_manager",
+      "customer_support",
+      "marketing_manager"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/sales_partnerships/Pricing_and_Fee_Schedule.pdf",
+    "size_bytes": 4886,
+    "content_hash": "9e9aead8b88a8892df1c68e15198bb2c08a4d9db8018bfe543d835fe9d5aba33"
+  },
+  {
+    "id": "A02",
+    "path": "sales_partnerships/Partner_Agreement_Template.docx",
+    "filename": "Partner_Agreement_Template.docx",
+    "format": "docx",
+    "department": "Sales & Partnerships",
+    "project": "",
+    "allowed_roles": [
+      "account_manager",
+      "legal_counsel"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/sales_partnerships/Partner_Agreement_Template.docx",
+    "size_bytes": 38785,
+    "content_hash": "aaa42ce5a852db7f865da192d077db063a31d41cf0c4e72b2cd49d183b86e37f"
+  },
+  {
+    "id": "E01",
+    "path": "engineering_security/API_Design_Standards.md",
+    "filename": "API_Design_Standards.md",
+    "format": "md",
+    "department": "Engineering & Security",
+    "project": "",
+    "allowed_roles": [
+      "engineer",
+      "security_engineer"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/engineering_security/API_Design_Standards.md",
+    "size_bytes": 4564,
+    "content_hash": "ef41d4ea0b4ff06b06cb7f16fffab0fcf709a4270b4a7b5e809cd79f1bf8c9e1"
+  },
+  {
+    "id": "E02",
+    "path": "engineering_security/Incident_Response_Runbook.md",
+    "filename": "Incident_Response_Runbook.md",
+    "format": "md",
+    "department": "Engineering & Security",
+    "project": "",
+    "allowed_roles": [
+      "engineer",
+      "security_engineer"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/engineering_security/Incident_Response_Runbook.md",
+    "size_bytes": 4171,
+    "content_hash": "9128fcd0d7f22c612f6324dec304a79b6889ef99435e4f1266f2d044d3f8ad04"
+  },
+  {
+    "id": "E03",
+    "path": "engineering_security/Access_Control_Policy.pdf",
+    "filename": "Access_Control_Policy.pdf",
+    "format": "pdf",
+    "department": "Engineering & Security",
+    "project": "",
+    "allowed_roles": [
+      "security_engineer",
+      "compliance_officer"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "security"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/engineering_security/Access_Control_Policy.pdf",
+    "size_bytes": 5678,
+    "content_hash": "2e0d62fe93a195c69109f2abb3c1c92afb36571d42e44e8e9da4de131bf38499"
+  },
+  {
+    "id": "E04",
+    "path": "engineering_security/Postmortem_2026-08_Outage.docx",
+    "filename": "Postmortem_2026-08_Outage.docx",
+    "format": "docx",
+    "department": "Engineering & Security",
+    "project": "",
+    "allowed_roles": [
+      "engineer",
+      "security_engineer"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/engineering_security/Postmortem_2026-08_Outage.docx",
+    "size_bytes": 39066,
+    "content_hash": "e297b3fbbefc185eb11aaed9731af21965590a68cf0377491bbf22974aad6d57"
+  },
+  {
+    "id": "L01",
+    "path": "legal/PDPA_Policy.pdf",
+    "filename": "PDPA_Policy.pdf",
+    "format": "pdf",
+    "department": "Legal",
+    "project": "",
+    "allowed_roles": [
+      "legal_counsel",
+      "compliance_officer"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/legal/PDPA_Policy.pdf",
+    "size_bytes": 5907,
+    "content_hash": "fd9ec7408eee04b3111b1c2fb41568f2ae20c7d15334d04030ba35dbdb444c79"
+  },
+  {
+    "id": "L02",
+    "path": "legal/NDA_Template.docx",
+    "filename": "NDA_Template.docx",
+    "format": "docx",
+    "department": "Legal",
+    "project": "",
+    "allowed_roles": [
+      "legal_counsel",
+      "account_manager"
+    ],
+    "required_clearance": 1,
+    "classification": "Public/Employee",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/legal/NDA_Template.docx",
+    "size_bytes": 38689,
+    "content_hash": "3bd2c4ad6a4d7608ee38b0cdc1dce770ac69dacff1f0b839dba0142f71586b31"
+  },
+  {
+    "id": "L03",
+    "path": "legal/Vendor_Contract_Review_Checklist.docx",
+    "filename": "Vendor_Contract_Review_Checklist.docx",
+    "format": "docx",
+    "department": "Legal",
+    "project": "",
+    "allowed_roles": [
+      "legal_counsel"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [
+      "legal"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/legal/Vendor_Contract_Review_Checklist.docx",
+    "size_bytes": 38803,
+    "content_hash": "7c9f25be86206b5f4c9a2fbd0c9b19895c313185066cb4b213714c89ad35835d"
+  },
+  {
+    "id": "J01",
+    "path": "projects/proj_merger/Due_Diligence_Report.docx",
+    "filename": "Due_Diligence_Report.docx",
+    "format": "docx",
+    "department": "Projects",
+    "project": "proj_merger",
+    "allowed_roles": [
+      "proj_merger"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/projects/proj_merger/Due_Diligence_Report.docx",
+    "size_bytes": 39244,
+    "content_hash": "932b9848a07c6aaf26c6651f310ae09ecda53eb671511fb758806610089b8c1a"
+  },
+  {
+    "id": "J02",
+    "path": "projects/proj_merger/Valuation_Model.xlsx",
+    "filename": "Valuation_Model.xlsx",
+    "format": "xlsx",
+    "department": "Projects",
+    "project": "proj_merger",
+    "allowed_roles": [
+      "proj_merger"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [
+      "finance"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/projects/proj_merger/Valuation_Model.xlsx",
+    "size_bytes": 8983,
+    "content_hash": "9bc0982a4c60460e14858f7c6b24d225a6607b0d4ee09ad27116039385e1271b"
+  },
+  {
+    "id": "J03",
+    "path": "projects/proj_mas_audit/Evidence_Index.xlsx",
+    "filename": "Evidence_Index.xlsx",
+    "format": "xlsx",
+    "department": "Projects",
+    "project": "proj_mas_audit",
+    "allowed_roles": [
+      "proj_mas_audit"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/projects/proj_mas_audit/Evidence_Index.xlsx",
+    "size_bytes": 9309,
+    "content_hash": "5e3d5959d76ecbe316a6f661e607c5270d38d1a44ec9fcad48cc54ab5c4831b5"
+  },
+  {
+    "id": "J04",
+    "path": "projects/proj_card_launch_vn/Licensing_Notes.docx",
+    "filename": "Licensing_Notes.docx",
+    "format": "docx",
+    "department": "Projects",
+    "project": "proj_card_launch_vn",
+    "allowed_roles": [
+      "proj_card_launch_vn"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/projects/proj_card_launch_vn/Licensing_Notes.docx",
+    "size_bytes": 39108,
+    "content_hash": "085fa04ebe902a2b3aa80905ae726d89dcb839fc2c127a684214390cfb71b81f"
+  },
+  {
+    "id": "J05",
+    "path": "projects/proj_aml_upgrade/Design_Doc.md",
+    "filename": "Design_Doc.md",
+    "format": "md",
+    "department": "Projects",
+    "project": "proj_aml_upgrade",
+    "allowed_roles": [
+      "proj_aml_upgrade"
+    ],
+    "required_clearance": 2,
+    "classification": "Internal",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/projects/proj_aml_upgrade/Design_Doc.md",
+    "size_bytes": 5696,
+    "content_hash": "6458bb5fb55422557a1c53723ef1b010759d99f59f1a14ed0d71b2ec75558c22"
+  },
+  {
+    "id": "X01",
+    "path": "executive/Board_Minutes_Q3.pdf",
+    "filename": "Board_Minutes_Q3.pdf",
+    "format": "pdf",
+    "department": "Executive",
+    "project": "",
+    "allowed_roles": [
+      "exec"
+    ],
+    "required_clearance": 4,
+    "classification": "Secret",
+    "compartments": [
+      "board"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/executive/Board_Minutes_Q3.pdf",
+    "size_bytes": 6750,
+    "content_hash": "5d3f70c3a0d854e4f576bd14d5bcd746064b601c872d3ac98b947bac44c5b65a"
+  },
+  {
+    "id": "X02",
+    "path": "executive/Exec_Compensation.xlsx",
+    "filename": "Exec_Compensation.xlsx",
+    "format": "xlsx",
+    "department": "Executive",
+    "project": "",
+    "allowed_roles": [
+      "exec",
+      "hr_manager"
+    ],
+    "required_clearance": 4,
+    "classification": "Secret",
+    "compartments": [
+      "hr",
+      "board"
+    ],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/executive/Exec_Compensation.xlsx",
+    "size_bytes": 8444,
+    "content_hash": "4178a322500b5ac7390fb1c4330bfb08aee05ec3855fe0c61c638fab4680f83d"
+  },
+  {
+    "id": "X03",
+    "path": "executive/Strategy_FY2027.pptx",
+    "filename": "Strategy_FY2027.pptx",
+    "format": "pptx",
+    "department": "Executive",
+    "project": "",
+    "allowed_roles": [
+      "exec"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/executive/Strategy_FY2027.pptx",
+    "size_bytes": 52621,
+    "content_hash": "d14315f0f020022cda458364927a6e8b99fd426c1676ee138086380858980760"
+  }
+]

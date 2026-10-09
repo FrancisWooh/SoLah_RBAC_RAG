@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+backend/.env
+
+# Node
+node_modules/
+dist/
+frontend/.env
+
+# OS
+.DS_Store
+
+# Secrets
+requirement/SecretKey.csv*
+requirement/tokenhub.txt
+.embed_cache.sqlite
+requirement/claudkey.txt
+requirement/claudekey.txt
+requirement/workbuddy/mcp.json
+requirement/workbuddy/audit_token.txt

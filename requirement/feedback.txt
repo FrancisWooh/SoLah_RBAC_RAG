@@ -1,0 +1,54 @@
+已经读完你 requirement/Technical Proposal for RBAC AIG.docx 的全文，并查证了官方赛事信息（赛道简介、评分维度、强制规则）。整体判断：方向选对了，但当前方案有一个会直接导致不计分的硬伤，外加范围过大/业务贴合度不够的问题，需要调整。
+
+1. 赛道匹配度：基本对齐
+
+官方 FinTech Track (Aspire) 的原话是「构建一个带 RBAC、安全日志与审计追踪的企业知识系统」，和你文档里"RBAC-RAG 企业知识系统"几乎逐字对应，方向没问题。架构分层、数据模型、API、Phase 划分都比一般黑客松提案详细得多，说明你是认真做过系统设计的。
+
+2. 硬伤：会被取消评分资格的问题
+
+官方规则明确：每个项目必须基于 CodeBuddy 或 WorkBuddy 构建，并且要提供使用证明（Product Sharing 组件、截图或开发记录），否则不进入评分。你的需求文档里完全没提到这件事——目前你是用 Claude Code 在写这个方案，但比赛要求的是腾讯自己的工具链。必须做到：
+- 实际开发过程用 CodeBuddy（覆盖 coding/review/test 环节），全程截图或录屏留痕；
+- 如果能让 WorkBuddy 承担一部分真实功能（比如把"查询审批""审计问答"做成 WorkBuddy agent，而不是纯自建 FastAPI 逻辑），在"AI 工具掌握度"这项（技术分的一部分）会明显加分，而不只是走个合规流程。
+
+这是第一优先级要补的东西，否则其他做得再好也进不了评审。
+
+3. 时间严重不够，范围必须砍
+
+今天 10/2，截止 10/16，只剩两周。你的 Phase 2/3 包含 Debezium CDC + Kafka、NAS watcher、蓝绿索引切换、多数据源连接器注册表——这些是扎实的工程设计，但对评委不可见，且极易在剩余时间里变成"半成品/演示翻车"的来源。建议：
+- Phase 1（MVP）全量完成，保证零 bug、docker-compose 一键起来；
+- 从 Phase 3 里只挑 1-2 个"演示爆点"做（推荐图片 OCR 多模态查询，视觉冲击力最强），放弃 CDC/Kafka/蓝绿发布——这些留在架构图和 PPT 里"讲"，不需要真的实现。
+
+4. 按官方评分权重逐项建议
+
+官方评分：AI 创新 30% / 技术卓越 20% / 用户体验与演示 25% / 商业价值 25%
+
+- AI 创新（30%，权重最高，目前最弱）：现状是标准 RAG + LLM 生成，创新深度不够。建议加：
+  - 审计日志的自然语言问答 agent（"过去一周谁越权查询过 AML 政策？"），把 RAG 能力用在审计本身上，形成闭环，这个点子很讨巧；
+  - 检索前对文档做 prompt-injection 防护（把检索内容当不可信数据处理），呼应官方措辞里的"security logging"，也是同类项目里评委会关注的安全深度；
+  - 术语规范化那块可以做成真正的 agent 式多轮消歧，而不是简单映射表。
+
+- 技术卓越（20%）：把混元 Embedding / 混元 TurboS / 腾讯云 VectorDB 从"可选备选"改成默认主路径，Qdrant/DeepSeek 本地只作降级方案。这是腾讯办的比赛，技术分里"AI 工具掌握度"看的就是你用没用好腾讯自己的技术栈。
+
+- 用户体验与演示（25%）：Pitch 是 8 分钟 + 5 分钟 Q&A。现在文档第 8 节的"演示脚本"质量很好，建议现在就把它写成分钟级的演讲稿+录屏草稿，别等开发完再准备——这部分和代码一样重要，占 25%。
+
+- 商业价值（25%，目前最大的缺口）：你的演示场景（finance_analyst 查财务合规、HR 年假政策、并购文档）是通用企业办公场景，没有体现 Aspire 自己的业务（SME 支出管理/企业卡/合规 KYC-AML）。建议把 demo 里的角色和文档内容换成贴近 Aspire 业务的场景，比如：
+  - "compliance_officer 查询 KYC/AML 审核标准"
+  - "card_ops 查询企业卡额度调整规则"
+  - "customer_support 查询某客户投诉处理 SOP"
+
+  再加一句商业化落地的话术：这套系统可以作为 Aspire 内部合规/运营团队的知识中台，未来也能作为面向 SME 客户的"企业知识管理"增值模块对外提供——这直接命中"是否解决真实问题 + 是否有商业化潜力"这条评分标准。
+
+总结优先级
+
+1. 立刻补上 CodeBuddy/WorkBuddy 使用与留痕（不做就没资格进评分）
+2. 砍掉 CDC/Kafka/蓝绿索引，聚焦 Phase 1 + 1个多模态亮点，保证两周内能跑通
+3. 把腾讯云 LLM/Embedding/VectorDB 设为主路径而非备选
+4. 把 demo 场景和文档内容替换成 Aspire 领域语境（合规/KYC/企业卡/客服 SOP）
+5. 现在就写 8 分钟演讲稿，和代码并行推进，不要留到最后
+
+参考来源：
+- Tencent Cloud Hackathon: https://tch.tencentcloud.com/
+- Tencent SG 2026 Aspire — The Internal Brain competition build · Issue #15893: https://github.com/woahwhattheheck/commons/issues/15893
+- Tencent Cloud, AI Singapore launch industry AI hackathon with DBS, Keppel and others: https://technode.global/2026/09/18/tencent-cloud-ai-singapore-industry-ai-hackathon-dbs-keppel/
+- Tencent Cloud and AI Singapore Connect Singapore's AI Talent with Real-World Industry Challenges: https://finance.yahoo.com/technology/ai/articles/tencent-cloud-ai-singapore-connect-080100371.html
+- Tencent Cloud Unveils New AI Agents, WorkBuddy and Miora, Driving Innovation and Real Business Outcomes Across Southeast Asia: https://www.prnewswire.com/apac/news-releases/tencent-cloud-unveils-new-ai-agents-workbuddy-and-miora-driving-innovation-and-real-business-outcomes-across-southeast-asia-302797910.html
