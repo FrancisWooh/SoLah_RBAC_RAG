@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert, Card, Col, Row, Statistic, Table, Tag, Typography, message } from 'antd'
+import { useTranslation } from 'react-i18next'
 import {
   Bar,
   BarChart,
@@ -45,6 +46,7 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -52,12 +54,12 @@ export default function Dashboard() {
     apiClient
       .get<DashboardStats>('/api/admin/dashboard/stats')
       .then((r) => setStats(r.data))
-      .catch(() => message.error('加载 Dashboard 数据失败'))
+      .catch(() => message.error(t('admin.dashboard.loadError')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   if (loading || !stats) {
-    return <Title level={3}>Dashboard</Title>
+    return <Title level={3}>{t('admin.dashboard.title')}</Title>
   }
 
   const denyRatePercent = Math.round(stats.deny_rate * 1000) / 10
@@ -65,28 +67,28 @@ export default function Dashboard() {
 
   return (
     <div>
-      <Title level={3}>Dashboard</Title>
+      <Title level={3}>{t('admin.dashboard.title')}</Title>
 
       <Row gutter={16}>
         <Col span={6}>
           <Card>
-            <Statistic title="查询总量" value={stats.total_queries} />
+            <Statistic title={t('admin.dashboard.totalQueries')} value={stats.total_queries} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="允许" value={stats.allow_count} valueStyle={{ color: ALLOW_COLOR }} />
+            <Statistic title={t('admin.dashboard.allow')} value={stats.allow_count} valueStyle={{ color: ALLOW_COLOR }} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="拒绝（越权尝试）" value={stats.deny_count} valueStyle={{ color: DENY_COLOR }} />
+            <Statistic title={t('admin.dashboard.deny')} value={stats.deny_count} valueStyle={{ color: DENY_COLOR }} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
             <Statistic
-              title="拒绝率"
+              title={t('admin.dashboard.denyRate')}
               value={denyRatePercent}
               suffix="%"
               valueStyle={{ color: denyRatePercent > 20 ? DENY_COLOR : undefined }}
@@ -95,31 +97,31 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      <Card title="查询量趋势（按天）" style={{ marginTop: 16 }}>
+      <Card title={t('admin.dashboard.volumeTrend')} style={{ marginTop: 16 }}>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={stats.query_volume_by_day}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
             <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Bar dataKey="count" name="查询量" fill={VOLUME_COLOR} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" name={t('admin.dashboard.volumeSeries')} fill={VOLUME_COLOR} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
-      <Card title="越权告警（最近拒绝记录）" style={{ marginTop: 16 }}>
+      <Card title={t('admin.dashboard.violationAlerts')} style={{ marginTop: 16 }}>
         <Table
           size="small"
           rowKey="id"
           dataSource={stats.recent_violations}
           pagination={false}
-          locale={{ emptyText: '暂无越权记录' }}
+          locale={{ emptyText: t('admin.dashboard.noViolations') }}
           columns={[
-            { title: '时间', dataIndex: 'created_at', width: 180 },
-            { title: '用户', dataIndex: 'username', render: (v) => v ?? '-' },
-            { title: '查询内容', dataIndex: 'query_text', ellipsis: true },
+            { title: t('admin.dashboard.colTime'), dataIndex: 'created_at', width: 180 },
+            { title: t('admin.dashboard.colUser'), dataIndex: 'username', render: (v) => v ?? '-' },
+            { title: t('admin.dashboard.colQuery'), dataIndex: 'query_text', ellipsis: true },
             {
-              title: '拒绝原因',
+              title: t('admin.dashboard.colDenyReason'),
               dataIndex: 'deny_reason',
               render: (v: string) => <Tag color="red">{v}</Tag>,
             },
@@ -127,13 +129,13 @@ export default function Dashboard() {
         />
       </Card>
 
-      <Card title="数据源同步健康度" style={{ marginTop: 16 }}>
+      <Card title={t('admin.dashboard.syncHealth')} style={{ marginTop: 16 }}>
         {syncEntries.length === 0 ? (
           <Alert
             type="info"
             showIcon
-            message="暂无已配置的数据源"
-            description="真实 CDC/NAS 同步不在本次交付范围内（见 readme.txt），这里如实反映 data_sources 表当前状态，不是虚构的健康数字。"
+            message={t('admin.dashboard.noDataSources')}
+            description={t('admin.dashboard.noDataSourcesDesc')}
           />
         ) : (
           syncEntries.map(([status, count]) => (

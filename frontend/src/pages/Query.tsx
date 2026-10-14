@@ -16,6 +16,8 @@ import type { UploadRequestOption } from '@rc-component/upload'
 import { Upload } from 'antd'
 import ReactMarkdown from 'react-markdown'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { Space } from 'antd'
 
 import { apiClient } from '../api/client'
 import { deleteSession, getSession, listSessions } from '../api/chat'
@@ -23,6 +25,7 @@ import type { ChatCitation, ChatSessionSummary } from '../api/chat'
 import { streamTextQuery } from '../api/queryStream'
 import { useAuth } from '../auth/AuthContext'
 import RoleRequestPanel from '../components/RoleRequestPanel'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 
 interface Turn {
   role: 'user' | 'assistant'
@@ -46,10 +49,10 @@ const DAY = 24 * 3600 * 1000
 function groupSessions(sessions: ChatSessionSummary[]) {
   const startOfToday = new Date().setHours(0, 0, 0, 0)
   const groups: [string, ChatSessionSummary[]][] = [
-    ['今天', []],
-    ['昨天', []],
-    ['7 天内', []],
-    ['更早', []],
+    ['query.today', []],
+    ['query.yesterday', []],
+    ['query.last7Days', []],
+    ['query.earlier', []],
   ]
   for (const s of sessions) {
     // the API returns naive UTC timestamps
@@ -61,6 +64,7 @@ function groupSessions(sessions: ChatSessionSummary[]) {
 }
 
 export default function Query() {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -121,7 +125,7 @@ export default function Query() {
         })),
       )
     } catch {
-      message.error('会话加载失败')
+      message.error(t('query.errorSessionLoad'))
       refreshSessions()
     }
   }
@@ -132,7 +136,7 @@ export default function Query() {
       if (id === sessionId) newChat()
       refreshSessions()
     } catch {
-      message.error('删除失败')
+      message.error(t('query.errorDelete'))
     }
   }
 
@@ -163,7 +167,7 @@ export default function Query() {
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         setTurns((prev) => prev.slice(0, -1))
-        setError('查询失败，请稍后重试')
+        setError(t('query.errorQuery'))
       }
     } finally {
       if (abortRef.current === controller) {
@@ -186,7 +190,7 @@ export default function Query() {
       const { data } = await apiClient.post<ImageResponse>('/api/query/image', formData)
       setTurns((prev) => [
         ...prev,
-        { role: 'user', content: `🖼 ${(file as File).name ?? '图片'}` },
+        { role: 'user', content: `🖼 ${(file as File).name ?? t('query.imageLabel')}` },
         {
           role: 'assistant',
           content: data.answer ?? '',
@@ -198,7 +202,7 @@ export default function Query() {
       ])
       onSuccess?.(data)
     } catch (err) {
-      setError('图片识别/查询失败，请稍后重试')
+      setError(t('query.errorImageQuery'))
       onError?.(err as Error)
     } finally {
       setBusy(false)
@@ -213,7 +217,7 @@ export default function Query() {
       <textarea
         value={question}
         rows={2}
-        placeholder="向知识库提问，例如：KYC/AML 审核标准是什么？"
+        placeholder={t('query.placeholder')}
         onChange={(e) => setQuestion(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -224,11 +228,11 @@ export default function Query() {
       />
       <div className="chat-composer-actions">
         <Upload accept="image/*" showUploadList={false} customRequest={onUploadImage} disabled={busy}>
-          <button type="button" className="icon-btn" title="上传图片查询" disabled={busy}>
+          <button type="button" className="icon-btn" title={t('query.uploadImage')} disabled={busy}>
             <PaperClipOutlined />
           </button>
         </Upload>
-        <button type="button" className="send-btn" onClick={send} disabled={busy || !question.trim()} title="发送">
+        <button type="button" className="send-btn" onClick={send} disabled={busy || !question.trim()} title={t('query.send')}>
           <ArrowUpOutlined />
         </button>
       </div>
@@ -240,20 +244,23 @@ export default function Query() {
       <aside className={`chat-sidebar${collapsed ? ' collapsed' : ''}`}>
         <div className="chat-sidebar-top">
           <span className="chat-brand">
-            <SafetyCertificateOutlined /> RBAC 知识库
+            <SafetyCertificateOutlined /> {t('query.brand')}
           </span>
-          <button type="button" className="icon-btn" onClick={() => setCollapsed(true)} title="收起侧栏">
-            <MenuFoldOutlined />
-          </button>
+          <Space size={0}>
+            <LanguageSwitcher />
+            <button type="button" className="icon-btn" onClick={() => setCollapsed(true)} title={t('query.collapseSidebar')}>
+              <MenuFoldOutlined />
+            </button>
+          </Space>
         </div>
         <button type="button" className="new-chat-btn" onClick={newChat}>
-          <PlusCircleOutlined /> New chat
+          <PlusCircleOutlined /> {t('query.newChat')}
         </button>
         <div className="chat-history">
-          {grouped.length === 0 && <div className="chat-history-empty">暂无历史会话</div>}
-          {grouped.map(([label, items]) => (
-            <div key={label}>
-              <div className="chat-history-group">{label}</div>
+          {grouped.length === 0 && <div className="chat-history-empty">{t('query.noHistory')}</div>}
+          {grouped.map(([key, items]) => (
+            <div key={key}>
+              <div className="chat-history-group">{t(key)}</div>
               {items.map((s) => (
                 <div
                   key={s.id}
@@ -263,16 +270,16 @@ export default function Query() {
                 >
                   <span className="chat-history-title">{s.title}</span>
                   <Popconfirm
-                    title="删除这个会话？"
-                    okText="删除"
-                    cancelText="取消"
+                    title={t('query.deleteSessionConfirm')}
+                    okText={t('common.delete')}
+                    cancelText={t('common.cancel')}
                     onConfirm={(e) => {
                       e?.stopPropagation()
                       removeSession(s.id)
                     }}
                     onCancel={(e) => e?.stopPropagation()}
                   >
-                    <button type="button" className="icon-btn del" onClick={(e) => e.stopPropagation()} title="删除">
+                    <button type="button" className="icon-btn del" onClick={(e) => e.stopPropagation()} title={t('common.delete')}>
                       <DeleteOutlined />
                     </button>
                   </Popconfirm>
@@ -288,11 +295,11 @@ export default function Query() {
             menu={{
               items: [
                 { key: 'info', disabled: true, label: `clearance ${user.clearance} · ${user.effective_roles.join(', ')}` },
-                { key: 'roles', icon: <UserSwitchOutlined />, label: '申请角色' },
+                { key: 'roles', icon: <UserSwitchOutlined />, label: t('query.applyRole') },
                 ...(user.effective_roles.includes('platform_admin')
-                  ? [{ key: 'admin', icon: <SettingOutlined />, label: '管理后台' }]
+                  ? [{ key: 'admin', icon: <SettingOutlined />, label: t('query.adminConsole') }]
                   : []),
-                { key: 'logout', icon: <LogoutOutlined />, label: '退出登录' },
+                { key: 'logout', icon: <LogoutOutlined />, label: t('common.logout') },
               ],
               onClick: ({ key }) => {
                 if (key === 'roles') setRoleModal(true)
@@ -315,7 +322,7 @@ export default function Query() {
 
       <main className="chat-main">
         {collapsed && (
-          <button type="button" className="icon-btn chat-expand" onClick={() => setCollapsed(false)} title="展开侧栏">
+          <button type="button" className="icon-btn chat-expand" onClick={() => setCollapsed(false)} title={t('query.expandSidebar')}>
             <MenuUnfoldOutlined />
           </button>
         )}
@@ -323,7 +330,7 @@ export default function Query() {
         {isEmpty ? (
           <div className="chat-empty">
             <h1>
-              <SafetyCertificateOutlined /> 想了解点什么？
+              <SafetyCertificateOutlined /> {t('query.emptyHeading')}
             </h1>
             {composer}
             {error && <Alert style={{ marginTop: 16 }} type="error" message={error} showIcon />}
@@ -350,7 +357,7 @@ export default function Query() {
         )}
       </main>
 
-      <Modal title="申请角色" open={roleModal} onCancel={() => setRoleModal(false)} footer={null} width={720} destroyOnClose>
+      <Modal title={t('query.roleModalTitle')} open={roleModal} onCancel={() => setRoleModal(false)} footer={null} width={720} destroyOnClose>
         <RoleRequestPanel />
       </Modal>
     </div>
@@ -368,14 +375,16 @@ function inlineFilenames(text: string, names: Map<string, string>): string {
 }
 
 function AssistantMessage({ turn, streaming, waiting }: { turn: Turn; streaming: boolean; waiting: boolean }) {
+  const { t } = useTranslation()
+
   if (turn.decision === 'deny') {
     return (
       <div className="msg-assistant">
         <Alert
           type="error"
           showIcon
-          message="无权限访问该内容"
-          description={turn.deny_reason ?? '当前角色未被授权查看相关文档，此次尝试已记录到审计日志。'}
+          message={t('query.noAccess')}
+          description={turn.deny_reason ?? t('query.noAccessDesc')}
         />
       </div>
     )
@@ -389,17 +398,17 @@ function AssistantMessage({ turn, streaming, waiting }: { turn: Turn; streaming:
           style={{ marginBottom: 8 }}
           type="info"
           showIcon
-          message="图片识别结果"
-          description={turn.recognized_text || '（未识别出文字）'}
+          message={t('query.imageRecognition')}
+          description={turn.recognized_text || t('query.noTextRecognized')}
         />
       )}
       <div className="answer-md" data-testid="answer">
-        {turn.content ? <ReactMarkdown>{inlineFilenames(turn.content, names)}</ReactMarkdown> : waiting ? '正在生成回答…' : ''}
+        {turn.content ? <ReactMarkdown>{inlineFilenames(turn.content, names)}</ReactMarkdown> : waiting ? t('query.generatingAnswer') : ''}
         {streaming && turn.content ? <span className="answer-cursor">▍</span> : null}
       </div>
       {sources.length > 0 && (
         <div className="msg-sources">
-          <span>来源：</span>
+          <span>{t('query.sources')}</span>
           {sources.map(([id, name]) => (
             <Tag key={id}>{name}</Tag>
           ))}

@@ -14,16 +14,28 @@ QUERY_INSTRUCTION = "Given a user question, retrieve the internal company docume
 
 class LocalEmbedder:
     def __init__(self, dim: int | None = None, model_name: str | None = None):
+        import torch
         from sentence_transformers import SentenceTransformer
 
         self.dim = dim or settings.embedding_dim
         self.model_name = model_name or settings.local_embedding_model
-        # Prefer the local HF cache: avoids a network round-trip (and flaky
-        # hub connectivity) on every process start; download only when absent.
+        # Qwen3-Embedding weights are BFloat16; sentence-transformers' encode()
+        # feeds float32 input by default, causing a dtype mismatch RuntimeError
+        # in the linear layers. Loading with torch_dtype=float32 upcasts the
+        # weights once at load time so all subsequent encode() calls are
+        # consistent. (The model is only 0.6B params, so the extra memory is
+        # negligible.)
         try:
-            self._model = SentenceTransformer(self.model_name, truncate_dim=self.dim, local_files_only=True)
+            self._model = SentenceTransformer(
+                self.model_name, truncate_dim=self.dim,
+                model_kwargs={"torch_dtype": torch.float32},
+                local_files_only=True,
+            )
         except Exception:
-            self._model = SentenceTransformer(self.model_name, truncate_dim=self.dim)
+            self._model = SentenceTransformer(
+                self.model_name, truncate_dim=self.dim,
+                model_kwargs={"torch_dtype": torch.float32},
+            )
         self._model.max_seq_length = 1024  # table chunks reach ~950 tokens
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:

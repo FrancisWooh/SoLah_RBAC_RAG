@@ -4,6 +4,7 @@ import {
   Select, Space, Table, Tag, Typography, message,
 } from 'antd'
 import { DeleteOutlined, EyeOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 
 import {
   NOW, ROLE_OPTIONS, STATUS_META, sourceStore, useDataSources,
@@ -11,8 +12,6 @@ import {
 } from './dataSourceMock'
 
 const { Title, Text } = Typography
-
-const TYPE_LABEL: Record<SourceType, string> = { nas: 'NAS 文件库', postgresql: 'PostgreSQL 数据库' }
 
 const location = (s: DataSourceItem) =>
   s.type === 'nas' ? s.nas?.rootPath : `${s.db?.host}:${s.db?.port}/${s.db?.dbname}`
@@ -31,13 +30,16 @@ interface AddForm {
   attachRoles?: string[]
 }
 
-/** 数据源总览：全部数据源的列表，可新增、查看、删除。（仅界面，未对接后端） */
+/** Data source overview: list of all data sources, with add/view/delete. (UI only, not backend-connected) */
 export default function DataSources() {
+  const { t } = useTranslation()
   const sources = useDataSources()
   const [adding, setAdding] = useState(false)
   const [viewing, setViewing] = useState<DataSourceItem | null>(null)
   const [form] = Form.useForm<AddForm>()
   const type = Form.useWatch('type', form) ?? 'postgresql'
+
+  const typeLabel = (tp: SourceType) => tp === 'nas' ? t('admin.datasources.typeNas') : t('admin.datasources.typePostgres')
 
   const onAdd = async () => {
     const v = await form.validateFields()
@@ -53,21 +55,21 @@ export default function DataSources() {
         },
       })
     }
-    message.success('已添加（界面演示，未保存到后端）')
+    message.success(t('admin.datasources.addedDemo'))
     setAdding(false)
   }
 
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-      <Title level={3} style={{ margin: 0 }}>数据源总览</Title>
-      <Alert type="info" showIcon message="当前页面仅为界面原型，数据为演示数据，增删操作不会写入后端。" />
+      <Title level={3} style={{ margin: 0 }}>{t('admin.datasources.title')}</Title>
+      <Alert type="info" showIcon message={t('admin.datasources.prototypeNotice')} />
 
       <Space>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setAdding(true) }}>
-          添加数据源
+          {t('admin.datasources.addSource')}
         </Button>
-        <Button icon={<SyncOutlined />} onClick={() => message.info('演示：已触发全部数据源同步')}>
-          全部立即同步
+        <Button icon={<SyncOutlined />} onClick={() => message.info(t('admin.datasources.syncAllDemo'))}>
+          {t('admin.datasources.syncAll')}
         </Button>
       </Space>
 
@@ -76,31 +78,31 @@ export default function DataSources() {
         dataSource={sources}
         pagination={false}
         columns={[
-          { title: '名称', dataIndex: 'name' },
-          { title: '类型', dataIndex: 'type', render: (t: SourceType) => <Tag color={t === 'nas' ? 'blue' : 'purple'}>{TYPE_LABEL[t]}</Tag> },
-          { title: '位置', render: (_, s) => <Text code>{location(s)}</Text> },
+          { title: t('admin.datasources.colName'), dataIndex: 'name', render: (_, s) => s.nameKey ? t(s.nameKey) : s.name },
+          { title: t('admin.datasources.colType'), dataIndex: 'type', render: (tp: SourceType) => <Tag color={tp === 'nas' ? 'blue' : 'purple'}>{typeLabel(tp)}</Tag> },
+          { title: t('admin.datasources.colLocation'), render: (_, s) => <Text code>{location(s)}</Text> },
           {
-            title: '状态', dataIndex: 'status',
-            render: (st: DataSourceItem['status']) => <Tag color={STATUS_META[st].color}>{STATUS_META[st].text}</Tag>,
+            title: t('admin.datasources.colStatus'), dataIndex: 'status',
+            render: (st: DataSourceItem['status']) => <Tag color={STATUS_META[st].color}>{t(STATUS_META[st].textKey)}</Tag>,
           },
-          { title: '文档/记录数', dataIndex: 'recordCount', align: 'right' },
-          { title: '上次同步', dataIndex: 'lastSyncAt', render: (v: string | null) => v ?? '—' },
+          { title: t('admin.datasources.colDocCount'), dataIndex: 'recordCount', align: 'right' },
+          { title: t('admin.datasources.colLastSync'), dataIndex: 'lastSyncAt', render: (v: string | null) => v ?? '—' },
           {
-            title: '操作',
+            title: t('admin.datasources.colOperation'),
             render: (_, s) => (
               <Space>
-                <Button size="small" icon={<EyeOutlined />} onClick={() => setViewing(s)}>查看</Button>
+                <Button size="small" icon={<EyeOutlined />} onClick={() => setViewing(s)}>{t('admin.datasources.view')}</Button>
                 <Button size="small" icon={<SyncOutlined />} onClick={() => {
                   sourceStore.update(s.id, { lastSyncAt: NOW(), status: 'ok' })
-                  message.success(`演示：${s.name} 已同步`)
-                }}>同步</Button>
+                  message.success(t('admin.datasources.syncedDemo', { name: s.nameKey ? t(s.nameKey) : s.name }))
+                }}>{t('admin.datasources.sync')}</Button>
                 <Popconfirm
-                  title={`删除数据源「${s.name}」？`}
-                  description="该数据源的全部记录会从知识库撤出。"
-                  okText="删除" okButtonProps={{ danger: true }} cancelText="取消"
-                  onConfirm={() => { sourceStore.remove(s.id); message.success('已删除（演示）') }}
+                  title={t('admin.datasources.deleteConfirm', { name: s.nameKey ? t(s.nameKey) : s.name })}
+                  description={t('admin.datasources.deleteDesc')}
+                  okText={t('common.delete')} okButtonProps={{ danger: true }} cancelText={t('common.cancel')}
+                  onConfirm={() => { sourceStore.remove(s.id); message.success(t('admin.datasources.deletedDemo')) }}
                 >
-                  <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                  <Button size="small" danger icon={<DeleteOutlined />}>{t('common.delete')}</Button>
                 </Popconfirm>
               </Space>
             ),
@@ -108,64 +110,64 @@ export default function DataSources() {
         ]}
       />
 
-      <Modal title="添加数据源" open={adding} onOk={onAdd} onCancel={() => setAdding(false)} okText="添加" cancelText="取消" width={560}>
+      <Modal title={t('admin.datasources.addModalTitle')} open={adding} onOk={onAdd} onCancel={() => setAdding(false)} okText={t('admin.datasources.add')} cancelText={t('common.cancel')} width={560}>
         <Form form={form} layout="vertical" initialValues={{ type: 'postgresql', port: 5432, table: 'knowledge_records', scanIntervalSec: 60 }}>
-          <Form.Item name="type" label="类型">
+          <Form.Item name="type" label={t('admin.datasources.formType')}>
             <Radio.Group optionType="button" options={[
-              { value: 'postgresql', label: 'PostgreSQL 数据库' },
-              { value: 'nas', label: 'NAS 文件库' },
+              { value: 'postgresql', label: t('admin.datasources.typePostgres') },
+              { value: 'nas', label: t('admin.datasources.typeNas') },
             ]} />
           </Form.Item>
-          <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
-            <Input placeholder="例如：Legal Database" />
+          <Form.Item name="name" label={t('admin.datasources.formName')} rules={[{ required: true, message: t('admin.datasources.formNameRequired') }]}>
+            <Input placeholder="Legal Database" />
           </Form.Item>
           {type === 'nas' ? (
             <>
-              <Form.Item name="rootPath" label="根目录" rules={[{ required: true, message: '请输入目录' }]}>
+              <Form.Item name="rootPath" label={t('admin.datasources.formRootPath')} rules={[{ required: true, message: t('admin.datasources.formRootPathRequired') }]}>
                 <Input placeholder="/data" />
               </Form.Item>
-              <Form.Item name="scanIntervalSec" label="扫描间隔（秒）">
+              <Form.Item name="scanIntervalSec" label={t('admin.datasources.formScanInterval')}>
                 <InputNumber min={10} style={{ width: 160 }} />
               </Form.Item>
             </>
           ) : (
             <>
               <Space align="start" size="middle">
-                <Form.Item name="host" label="主机" rules={[{ required: true, message: '必填' }]}><Input placeholder="postgres" style={{ width: 220 }} /></Form.Item>
-                <Form.Item name="port" label="端口"><InputNumber min={1} max={65535} style={{ width: 100 }} /></Form.Item>
-                <Form.Item name="dbname" label="数据库名" rules={[{ required: true, message: '必填' }]}><Input style={{ width: 160 }} /></Form.Item>
+                <Form.Item name="host" label={t('admin.datasources.formHost')} rules={[{ required: true, message: t('admin.datasources.formRequired') }]}><Input placeholder="postgres" style={{ width: 220 }} /></Form.Item>
+                <Form.Item name="port" label={t('admin.datasources.formPort')}><InputNumber min={1} max={65535} style={{ width: 100 }} /></Form.Item>
+                <Form.Item name="dbname" label={t('admin.datasources.formDbName')} rules={[{ required: true, message: t('admin.datasources.formRequired') }]}><Input style={{ width: 160 }} /></Form.Item>
               </Space>
               <Space align="start" size="middle">
-                <Form.Item name="user" label="只读账号" rules={[{ required: true, message: '必填' }]}><Input style={{ width: 200 }} /></Form.Item>
-                <Form.Item name="password" label="密码"><Input.Password style={{ width: 200 }} /></Form.Item>
+                <Form.Item name="user" label={t('admin.datasources.formUser')} rules={[{ required: true, message: t('admin.datasources.formRequired') }]}><Input style={{ width: 200 }} /></Form.Item>
+                <Form.Item name="password" label={t('admin.datasources.formPassword')}><Input.Password style={{ width: 200 }} /></Form.Item>
               </Space>
-              <Form.Item name="table" label="数据表"><Input /></Form.Item>
-              <Form.Item name="attachRoles" label="归属角色（可访问该库的默认角色）" rules={[{ required: true, message: '请选择角色' }]}>
+              <Form.Item name="table" label={t('admin.datasources.formTable')}><Input /></Form.Item>
+              <Form.Item name="attachRoles" label={t('admin.datasources.formAttachRoles')} rules={[{ required: true, message: t('admin.datasources.formAttachRolesRequired') }]}>
                 <Select mode="multiple" options={ROLE_OPTIONS} />
               </Form.Item>
-              <Text type="secondary">字段映射和权限列映射可在“数据库连接”页面进一步配置。</Text>
+              <Text type="secondary">{t('admin.datasources.fieldMappingHint')}</Text>
             </>
           )}
         </Form>
       </Modal>
 
-      <Drawer title={viewing?.name} open={!!viewing} onClose={() => setViewing(null)} width={520}>
+      <Drawer title={viewing ? (viewing.nameKey ? t(viewing.nameKey) : viewing.name) : ''} open={!!viewing} onClose={() => setViewing(null)} width={520}>
         {viewing && (
           <Descriptions column={1} bordered size="small">
-            <Descriptions.Item label="类型">{TYPE_LABEL[viewing.type]}</Descriptions.Item>
-            <Descriptions.Item label="状态"><Tag color={STATUS_META[viewing.status].color}>{STATUS_META[viewing.status].text}</Tag></Descriptions.Item>
-            <Descriptions.Item label="文档/记录数">{viewing.recordCount}</Descriptions.Item>
-            <Descriptions.Item label="上次同步">{viewing.lastSyncAt ?? '—'}</Descriptions.Item>
-            {viewing.lastMessage && <Descriptions.Item label="最近提示"><Text type="warning">{viewing.lastMessage}</Text></Descriptions.Item>}
+            <Descriptions.Item label={t('admin.datasources.drawerType')}>{typeLabel(viewing.type)}</Descriptions.Item>
+            <Descriptions.Item label={t('admin.datasources.drawerStatus')}><Tag color={STATUS_META[viewing.status].color}>{t(STATUS_META[viewing.status].textKey)}</Tag></Descriptions.Item>
+            <Descriptions.Item label={t('admin.datasources.drawerDocCount')}>{viewing.recordCount}</Descriptions.Item>
+            <Descriptions.Item label={t('admin.datasources.drawerLastSync')}>{viewing.lastSyncAt ?? '—'}</Descriptions.Item>
+            {viewing.lastMessage && <Descriptions.Item label={t('admin.datasources.drawerLastMessage')}><Text type="warning">{viewing.lastMessage}</Text></Descriptions.Item>}
             {viewing.nas && (<>
-              <Descriptions.Item label="根目录"><Text code>{viewing.nas.rootPath}</Text></Descriptions.Item>
-              <Descriptions.Item label="扫描间隔">{viewing.nas.scanIntervalSec} 秒</Descriptions.Item>
+              <Descriptions.Item label={t('admin.datasources.drawerRootPath')}><Text code>{viewing.nas.rootPath}</Text></Descriptions.Item>
+              <Descriptions.Item label={t('admin.datasources.drawerScanInterval')}>{viewing.nas.scanIntervalSec} {t('admin.datasources.drawerSeconds')}</Descriptions.Item>
             </>)}
             {viewing.db && (<>
-              <Descriptions.Item label="连接"><Text code>{viewing.db.user}@{viewing.db.host}:{viewing.db.port}/{viewing.db.dbname}</Text></Descriptions.Item>
-              <Descriptions.Item label="数据表">{viewing.db.table}</Descriptions.Item>
-              <Descriptions.Item label="归属角色">{viewing.db.attachRoles.map((r) => <Tag key={r}>{r}</Tag>)}</Descriptions.Item>
-              <Descriptions.Item label="密级列 / 分区列">{viewing.db.clearanceColumn ?? '—'} / {viewing.db.compartmentColumn ?? '—'}</Descriptions.Item>
+              <Descriptions.Item label={t('admin.datasources.drawerConnection')}><Text code>{viewing.db.user}@{viewing.db.host}:{viewing.db.port}/{viewing.db.dbname}</Text></Descriptions.Item>
+              <Descriptions.Item label={t('admin.datasources.drawerTable')}>{viewing.db.table}</Descriptions.Item>
+              <Descriptions.Item label={t('admin.datasources.drawerAttachRoles')}>{viewing.db.attachRoles.map((r) => <Tag key={r}>{r}</Tag>)}</Descriptions.Item>
+              <Descriptions.Item label={t('admin.datasources.drawerClearanceCompartment')}>{viewing.db.clearanceColumn ?? '—'} / {viewing.db.compartmentColumn ?? '—'}</Descriptions.Item>
             </>)}
           </Descriptions>
         )}

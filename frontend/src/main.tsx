@@ -2,6 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
+import './i18n'
+import { LanguageProvider } from './i18n/LanguageProvider'
 import App from './App.tsx'
 import AdminApp from './AdminApp.tsx'
 
@@ -11,7 +13,9 @@ const Root = import.meta.env.MODE === 'admin' ? AdminApp : App
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <Root />
+      <LanguageProvider>
+        <Root />
+      </LanguageProvider>
     </BrowserRouter>
   </StrictMode>,
 )

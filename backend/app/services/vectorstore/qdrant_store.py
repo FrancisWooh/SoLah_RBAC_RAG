@@ -4,7 +4,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
 
 from app.core.config import settings
-from app.services.vectorstore.base import PermissionContext, ScoredChunk, VectorChunk
+from app.services.vectorstore.base import BlindHit, PermissionContext, ScoredChunk, VectorChunk
 from app.services.vectorstore.rbac_filter import filter_hits_by_permission
 
 
@@ -168,3 +168,26 @@ class QdrantVectorStore:
             limit=1,
         ).points
         return results[0].score if results else 0.0
+
+    def peek_relevant_hits(
+        self, query_vector: list[float], top_k: int = 10
+    ) -> list[BlindHit]:
+        results = self._client.query_points(
+            collection_name=self._collection,
+            query=query_vector,
+            query_filter=qm.Filter(must_not=self._not_archived()),
+            limit=top_k,
+            with_payload=["doc_id", "allowed_roles", "required_clearance",
+                           "compartments", "status"],
+        ).points
+        return [
+            BlindHit(
+                doc_id=r.payload.get("doc_id", ""),
+                score=r.score,
+                allowed_roles=r.payload.get("allowed_roles", []),
+                required_clearance=r.payload.get("required_clearance", 0),
+                compartments=r.payload.get("compartments", []),
+                status=r.payload.get("status", "active"),
+            )
+            for r in results
+        ]

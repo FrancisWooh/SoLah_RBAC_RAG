@@ -1,6 +1,7 @@
 import { Result, Spin } from 'antd'
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useAuth } from './AuthContext'
 
@@ -12,6 +13,7 @@ export default function ProtectedRoute({
   /** If set, the user's effective_roles must include at least one of these. */
   requireRoles?: string[]
 }) {
+  const { t } = useTranslation()
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -30,8 +32,8 @@ export default function ProtectedRoute({
     return (
       <Result
         status="403"
-        title="权限不足"
-        subTitle="该页面需要管理员角色。"
+        title={t('admin.protectedRoute.forbidden')}
+        subTitle={t('admin.protectedRoute.forbiddenDesc')}
       />
     )
   }

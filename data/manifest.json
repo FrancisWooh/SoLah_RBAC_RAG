@@ -663,8 +663,8 @@
     "allowed_roles": [
       "employee"
     ],
-    "required_clearance": 1,
-    "classification": "Public/Employee",
+    "required_clearance": 2,
+    "classification": "Internal",
     "compartments": [],
     "version": "v1.0",
     "status": "active",
@@ -1049,6 +1049,26 @@
     "source_ref": "/company_share/projects/proj_aml_upgrade/Design_Doc.md",
     "size_bytes": 5696,
     "content_hash": "6458bb5fb55422557a1c53723ef1b010759d99f59f1a14ed0d71b2ec75558c22"
+  },
+  {
+    "id": "J06",
+    "path": "projects/proj_merger/Project_Risk_Register.xlsx",
+    "filename": "Project_Risk_Register.xlsx",
+    "format": "xlsx",
+    "department": "Projects",
+    "project": "proj_merger",
+    "allowed_roles": [
+      "proj_merger"
+    ],
+    "required_clearance": 3,
+    "classification": "Confidential",
+    "compartments": [],
+    "version": "v1.0",
+    "status": "active",
+    "source_type": "nas",
+    "source_ref": "/company_share/projects/proj_merger/Project_Risk_Register.xlsx",
+    "size_bytes": 8081,
+    "content_hash": "9e7184db68afca38864e5b416aa8f37b4e1bdea2203270f17fbd121c33b42117"
   },
   {
     "id": "X01",

@@ -23,7 +23,7 @@ filter_hits_by_permission(), which is authoritative regardless of backend.
 """
 
 from app.core.config import settings
-from app.services.vectorstore.base import PermissionContext, ScoredChunk, VectorChunk
+from app.services.vectorstore.base import BlindHit, PermissionContext, ScoredChunk, VectorChunk
 from app.services.vectorstore.rbac_filter import filter_hits_by_permission
 
 
@@ -148,3 +148,25 @@ class TencentVectorDBStore:
     def peek_top_score(self, query_vector: list[float]) -> float:
         raw_hits = self._collection.search(vectors=[query_vector], limit=1, output_fields=[])
         return _parse_peek_score(raw_hits)
+
+    def peek_relevant_hits(
+        self, query_vector: list[float], top_k: int = 10
+    ) -> list[BlindHit]:
+        raw_hits = self._collection.search(
+            vectors=[query_vector],
+            limit=top_k,
+            output_fields=["doc_id", "allowed_roles", "required_clearance",
+                           "compartments", "status"],
+        )
+        docs = raw_hits[0] if raw_hits else []
+        return [
+            BlindHit(
+                doc_id=doc.get("doc_id", ""),
+                score=doc.get("score", 0.0),
+                allowed_roles=doc.get("allowed_roles", []),
+                required_clearance=doc.get("required_clearance", 0),
+                compartments=doc.get("compartments", []),
+                status=doc.get("status", "active"),
+            )
+            for doc in docs
+        ]

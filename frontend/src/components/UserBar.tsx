@@ -1,9 +1,11 @@
 import { Button, Space, Tag, Typography } from 'antd'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useAuth } from '../auth/AuthContext'
 
 export default function UserBar() {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -26,7 +28,7 @@ export default function UserBar() {
         ))}
       </Space>
       <Button size="small" onClick={onLogout}>
-        退出登录
+        {t('admin.userBar.logout')}
       </Button>
     </Space>
   )

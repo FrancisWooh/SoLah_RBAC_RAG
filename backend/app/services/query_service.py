@@ -7,7 +7,8 @@ from app.core.config import settings
 from app.services.embeddings.factory import get_embedder
 from app.services.llm.factory import get_llm
 from app.services.llm.mock_llm import MockLLM
-from app.services.vectorstore.base import PermissionContext, ScoredChunk
+from app.services.vectorstore.base import BlindHit, PermissionContext, ScoredChunk
+from app.services.vectorstore.rbac_filter import is_permitted
 from app.services.vectorstore.factory import get_vector_store
 
 
@@ -86,13 +87,25 @@ class QueryResult:
     blocked_doc_id: str | None = None  # audit only, never in an API response
 
 
-def _blind_peek(vector_store, query_vector) -> tuple[float, str | None]:
-    """Permission-blind best match: (score, doc_id). The doc_id exists only so a
-    denial can be audited; it never reaches the asking user."""
+def _blind_peek_relevant(
+    vector_store, query_vector, top_k: int = 10
+) -> tuple[float, list[BlindHit]]:
+    """Permission-blind peek: returns (top_score, all_hits).
+    The hits carry permission fields so the caller can check is_permitted()
+    on each — but never text/doc_id in any user-visible output."""
+    peek_relevant = getattr(vector_store, "peek_relevant_hits", None)
+    if peek_relevant:
+        hits = peek_relevant(query_vector, top_k)
+        top_score = hits[0].score if hits else 0.0
+        return top_score, hits
+    # Fallback for stores that only implement the old interface
     peek_hit = getattr(vector_store, "peek_top_hit", None)
     if peek_hit:
-        return peek_hit(query_vector)
-    return vector_store.peek_top_score(query_vector), None
+        score, doc_id = peek_hit(query_vector)
+        if doc_id:
+            return score, [BlindHit(doc_id, score, [], 0, [], "active")]
+        return score, []
+    return vector_store.peek_top_score(query_vector), []
 
 
 @dataclass
@@ -140,7 +153,7 @@ def plan_text_query(
     # answer once it clears the relevance bar; otherwise fall through to the
     # same "nothing good here" handling as an empty hit list.
     good_hits = [h for h in hits if h.score >= RELEVANCE_THRESHOLD]
-    blind_top, blind_doc_id = _blind_peek(vector_store, query_vector)
+    blind_top, blind_hits = _blind_peek_relevant(vector_store, query_vector, settings.retrieve_k)
     best_permitted = max((h.score for h in good_hits), default=0.0)
     restricted_is_better = (
         bool(good_hits) and blind_top - best_permitted >= DENY_MARGIN and best_permitted < DENY_STRONG_SCORE
@@ -161,9 +174,19 @@ def plan_text_query(
             retrieved_doc_ids=list(dict.fromkeys(h.doc_id for h in context)),
         )
 
-    # No good permitted hits. Use the permission-blind peek purely to pick the
-    # right answer/audit wording; its doc_id goes to the audit trail only.
-    if blind_top >= RELEVANCE_THRESHOLD:
+    # No good permitted hits. Check if the blind search found ANY relevant
+    # docs that were filtered out by RBAC — if so, it's "deny" (no permission).
+    # This replaces the old blind_top >= RELEVANCE_THRESHOLD check: looking at
+    # ALL blind hits (not just top-1) is robust against query-text dilution
+    # shifting the top score below the threshold.
+    relevant_blind = [h for h in blind_hits if h.score >= RELEVANCE_THRESHOLD]
+    restricted_relevant = [
+        h for h in relevant_blind
+        if not is_permitted(h.allowed_roles, h.required_clearance, h.compartments, permission)
+    ]
+
+    if restricted_relevant:
+        best_restricted = max(restricted_relevant, key=lambda h: h.score)
         return QueryPlan(
             decision="deny",
             deny_reason="您当前的角色/密级/分区权限不足以访问与该问题相关的内容",
@@ -171,7 +194,7 @@ def plan_text_query(
             context=[],
             citations=[],
             retrieved_doc_ids=[],
-            blocked_doc_id=blind_doc_id,
+            blocked_doc_id=best_restricted.doc_id,
         )
 
     return QueryPlan(

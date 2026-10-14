@@ -13,6 +13,7 @@ import {
   Typography,
 } from 'antd'
 import type { Dayjs } from 'dayjs'
+import { useTranslation } from 'react-i18next'
 
 import { apiClient } from '../../api/client'
 
@@ -51,6 +52,7 @@ interface RoleRequestOut {
 }
 
 export default function Roles() {
+  const { t } = useTranslation()
   const [users, setUsers] = useState<UserOut[]>([])
   const [roles, setRoles] = useState<RoleOut[]>([])
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>()
@@ -90,42 +92,44 @@ export default function Roles() {
   }
 
   useEffect(() => {
-    loadLists().catch(() => message.error('加载用户/角色列表失败'))
-    loadPendingRequests().catch(() => message.error('加载待审批申请失败'))
+    loadLists().catch(() => message.error(t('admin.roles.loadUsersError')))
+    loadPendingRequests().catch(() => message.error(t('admin.roles.loadPendingError')))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const onApproveRequest = async (id: number) => {
     try {
       await apiClient.post(`/api/admin/role-requests/${id}/approve`)
-      message.success('已批准')
+      message.success(t('admin.roles.approveSuccess'))
       await loadPendingRequests()
       if (selectedUserId) await loadUserRoles(selectedUserId)
     } catch {
-      message.error('批准失败')
+      message.error(t('admin.roles.approveError'))
     }
   }
 
   const onRejectRequest = async (id: number) => {
     try {
       await apiClient.post(`/api/admin/role-requests/${id}/reject`)
-      message.success('已拒绝')
+      message.success(t('admin.roles.rejectSuccess'))
       await loadPendingRequests()
     } catch {
-      message.error('拒绝失败')
+      message.error(t('admin.roles.rejectError'))
     }
   }
 
   useEffect(() => {
     if (selectedUserId) {
-      loadUserRoles(selectedUserId).catch(() => message.error('加载用户角色失败'))
+      loadUserRoles(selectedUserId).catch(() => message.error(t('admin.roles.loadUserRolesError')))
     } else {
       setUserRoles([])
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUserId])
 
   const onGrant = async () => {
     if (!selectedUserId || !grantRoleId) {
-      message.warning('请先选择用户和角色')
+      message.warning(t('admin.roles.selectUserAndRole'))
       return
     }
     try {
@@ -136,26 +140,26 @@ export default function Roles() {
         source_ref: grantSourceRef || null,
         end_at: grantEndAt ? grantEndAt.toISOString() : null,
       })
-      message.success('已授予角色')
+      message.success(t('admin.roles.grantSuccess'))
       await loadUserRoles(selectedUserId)
     } catch {
-      message.error('授予失败')
+      message.error(t('admin.roles.grantError'))
     }
   }
 
   const onRevoke = async (userRoleId: number) => {
     try {
       await apiClient.post('/api/admin/roles/revoke', { user_role_id: userRoleId })
-      message.success('已撤销')
+      message.success(t('admin.roles.revokeSuccess'))
       if (selectedUserId) await loadUserRoles(selectedUserId)
     } catch {
-      message.error('撤销失败')
+      message.error(t('admin.roles.revokeError'))
     }
   }
 
   const onProjectJoin = async () => {
     if (!selectedUserId || !projectRole) {
-      message.warning('请先选择用户和项目角色')
+      message.warning(t('admin.roles.selectUserAndProjectRole'))
       return
     }
     try {
@@ -165,10 +169,10 @@ export default function Roles() {
         project_role: projectRole,
         project_end_at: projectEndAt ? projectEndAt.toISOString() : null,
       })
-      message.success(`已加入项目 ${projectId}，自动授予 ${projectRole}`)
+      message.success(t('admin.roles.joinProjectSuccess', { projectId, projectRole }))
       await loadUserRoles(selectedUserId)
     } catch {
-      message.error('加入项目失败')
+      message.error(t('admin.roles.joinProjectError'))
     }
   }
 
@@ -179,22 +183,22 @@ export default function Roles() {
         project_id: projectId,
         user_id: selectedUserId,
       })
-      message.success(`已移出项目 ${projectId}，相关临时角色已撤销`)
+      message.success(t('admin.roles.leaveProjectSuccess', { projectId }))
       await loadUserRoles(selectedUserId)
     } catch {
-      message.error('移出项目失败（可能该用户本不在此项目中）')
+      message.error(t('admin.roles.leaveProjectError'))
     }
   }
 
   return (
     <div>
-      <Title level={3}>角色管理</Title>
+      <Title level={3}>{t('admin.roles.title')}</Title>
 
       <Space direction="vertical" style={{ width: '100%' }} size="large">
-        <Card title="1. 选择用户">
+        <Card title={t('admin.roles.step1')}>
           <Select
             style={{ width: 320 }}
-            placeholder="选择用户"
+            placeholder={t('admin.roles.selectUser')}
             showSearch
             optionFilterProp="label"
             value={selectedUserId}
@@ -206,25 +210,25 @@ export default function Roles() {
           />
         </Card>
 
-        <Card title="2. 当前角色授予记录">
+        <Card title={t('admin.roles.step2')}>
           <Table
             rowKey="id"
             dataSource={userRoles}
             pagination={false}
-            locale={{ emptyText: selectedUserId ? '暂无角色记录' : '请先选择用户' }}
+            locale={{ emptyText: selectedUserId ? t('admin.roles.noRoles') : t('admin.roles.selectUserFirst') }}
             columns={[
-              { title: '角色', dataIndex: 'role_id' },
-              { title: '来源', dataIndex: 'source' },
-              { title: '来源引用', dataIndex: 'source_ref' },
-              { title: '到期时间', dataIndex: 'end_at', render: (v) => v ?? '永久' },
-              { title: '状态', dataIndex: 'status' },
+              { title: t('admin.roles.colRole'), dataIndex: 'role_id' },
+              { title: t('admin.roles.colSource'), dataIndex: 'source' },
+              { title: t('admin.roles.colSourceRef'), dataIndex: 'source_ref' },
+              { title: t('admin.roles.colExpiry'), dataIndex: 'end_at', render: (v) => v ?? t('common.permanent') },
+              { title: t('admin.roles.colStatus'), dataIndex: 'status' },
               {
-                title: '操作',
+                title: t('admin.roles.colOperation'),
                 render: (_, row: UserRoleOut) =>
                   row.status === 'active' ? (
-                    <Popconfirm title="确认撤销该角色？" onConfirm={() => onRevoke(row.id)}>
+                    <Popconfirm title={t('admin.roles.revokeConfirm')} onConfirm={() => onRevoke(row.id)}>
                       <Button size="small" danger>
-                        撤销
+                        {t('admin.roles.revokeBtn')}
                       </Button>
                     </Popconfirm>
                   ) : null,
@@ -233,11 +237,11 @@ export default function Roles() {
           />
         </Card>
 
-        <Card title="3. 直接授予角色">
+        <Card title={t('admin.roles.step3')}>
           <Space wrap>
             <Select
               style={{ width: 180 }}
-              placeholder="角色"
+              placeholder={t('common.role')}
               value={grantRoleId}
               onChange={setGrantRoleId}
               showSearch
@@ -256,33 +260,33 @@ export default function Roles() {
             />
             <Input
               style={{ width: 160 }}
-              placeholder="来源引用（可选）"
+              placeholder={t('admin.roles.sourceRefPlaceholder')}
               value={grantSourceRef}
               onChange={(e) => setGrantSourceRef(e.target.value)}
             />
             <DatePicker
               showTime
-              placeholder="到期时间（留空=永久）"
+              placeholder={t('admin.roles.expiryPlaceholder')}
               value={grantEndAt}
               onChange={setGrantEndAt}
             />
             <Button type="primary" onClick={onGrant}>
-              授予
+              {t('admin.roles.grantBtn')}
             </Button>
           </Space>
         </Card>
 
-        <Card title="3.5 项目成员（加入自动授权 / 移出自动撤销）">
+        <Card title={t('admin.roles.step3_5')}>
           <Space wrap>
             <Input
               style={{ width: 200 }}
-              placeholder="项目ID"
+              placeholder={t('admin.roles.projectIdPlaceholder')}
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
             />
             <Select
               style={{ width: 180 }}
-              placeholder="项目角色"
+              placeholder={t('admin.roles.projectRolePlaceholder')}
               value={projectRole}
               onChange={setProjectRole}
               showSearch
@@ -291,40 +295,40 @@ export default function Roles() {
             />
             <DatePicker
               showTime
-              placeholder="项目结束时间（可选）"
+              placeholder={t('admin.roles.projectEndPlaceholder')}
               value={projectEndAt}
               onChange={setProjectEndAt}
             />
             <Button type="primary" onClick={onProjectJoin}>
-              加入项目
+              {t('admin.roles.joinProject')}
             </Button>
             <Button danger onClick={onProjectLeave}>
-              移出项目
+              {t('admin.roles.leaveProject')}
             </Button>
           </Space>
         </Card>
 
-        <Card title="4. 待审批申请">
+        <Card title={t('admin.roles.step4')}>
           <Table
             rowKey="id"
             dataSource={pendingRequests}
             pagination={false}
-            locale={{ emptyText: '暂无待审批申请' }}
+            locale={{ emptyText: t('admin.roles.noPending') }}
             columns={[
-              { title: '申请人', render: (_, row: RoleRequestOut) => usernameById(row.requester_id) },
-              { title: '角色', dataIndex: 'role_id' },
-              { title: '理由', dataIndex: 'reason', ellipsis: true },
-              { title: '申请时长(h)', dataIndex: 'requested_duration_hours', render: (v) => v ?? '永久' },
-              { title: '提交时间', dataIndex: 'created_at' },
+              { title: t('admin.roles.colApplicant'), render: (_, row: RoleRequestOut) => usernameById(row.requester_id) },
+              { title: t('admin.roles.colRole'), dataIndex: 'role_id' },
+              { title: t('admin.roles.colReason'), dataIndex: 'reason', ellipsis: true },
+              { title: t('admin.roles.colDuration'), dataIndex: 'requested_duration_hours', render: (v) => v ?? t('common.permanent') },
+              { title: t('admin.roles.colSubmittedAt'), dataIndex: 'created_at' },
               {
-                title: '操作',
+                title: t('admin.roles.colOperation'),
                 render: (_, row: RoleRequestOut) => (
                   <Space>
                     <Button size="small" type="primary" onClick={() => onApproveRequest(row.id)}>
-                      批准
+                      {t('common.approve')}
                     </Button>
                     <Button size="small" danger onClick={() => onRejectRequest(row.id)}>
-                      拒绝
+                      {t('common.reject')}
                     </Button>
                   </Space>
                 ),
@@ -336,9 +340,7 @@ export default function Roles() {
 
       <Divider />
       <Typography.Text type="secondary">
-        提示：演示场景三——先"加入项目"（自动授予角色），到 /app/query 验证可以查询；
-        再"移出项目"，验证立即被拒绝（权限缓存TTL 30秒，但撤销接口会主动清缓存，
-        所以是立即生效，不用等）。
+        {t('admin.roles.hintText')}
       </Typography.Text>
     </div>
   )

@@ -35,6 +35,19 @@ class PermissionContext:
     compartments: set[str]
 
 
+@dataclass
+class BlindHit:
+    """Permission-blind peek result. No text field by design: the caller
+    must never expose content to the asking user. Only score, doc_id (for
+    audit), and permission fields (so is_permitted can run on each hit)."""
+    doc_id: str
+    score: float
+    allowed_roles: list[str]
+    required_clearance: int
+    compartments: list[str]
+    status: str = "active"
+
+
 class VectorStore(Protocol):
     def upsert(self, chunks: list[VectorChunk]) -> None: ...
 
@@ -64,4 +77,13 @@ class VectorStore(Protocol):
         it" for audit/deny-reason wording. Must return a bare float — never
         a doc_id, title or any content, since whoever asked for this may not
         be authorized to know the document exists at all."""
+        ...
+
+    def peek_relevant_hits(
+        self, query_vector: list[float], top_k: int = 10
+    ) -> list["BlindHit"]:
+        """Permission-blind search returning all hits (up to top_k) that are
+        NOT archived/deleted, with their permission fields so the caller can
+        run is_permitted() on each. Like peek_top_hit, the doc_ids are for
+        audit/decision logic only — never put them in an API response."""
         ...

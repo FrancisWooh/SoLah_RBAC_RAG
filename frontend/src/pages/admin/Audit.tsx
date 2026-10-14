@@ -12,6 +12,7 @@ import {
   Typography,
   message,
 } from 'antd'
+import { useTranslation } from 'react-i18next'
 
 import { apiClient } from '../../api/client'
 
@@ -41,6 +42,7 @@ interface ChainVerificationOut {
 }
 
 export default function Audit() {
+  const { t } = useTranslation()
   const [logs, setLogs] = useState<AuditLogOut[]>([])
   const [loading, setLoading] = useState(false)
   const [eventType, setEventType] = useState<string | undefined>()
@@ -59,7 +61,7 @@ export default function Audit() {
       const { data } = await apiClient.get<AuditLogOut[]>('/api/admin/audit/logs', { params })
       setLogs(data)
     } catch {
-      message.error('加载审计日志失败')
+      message.error(t('admin.audit.loadError'))
     } finally {
       setLoading(false)
     }
@@ -75,7 +77,7 @@ export default function Audit() {
       const { data } = await apiClient.get<ChainVerificationOut>('/api/admin/audit/verify')
       setVerification(data)
     } catch {
-      message.error('校验失败')
+      message.error(t('admin.audit.verifyError'))
     }
   }
 
@@ -94,19 +96,19 @@ export default function Audit() {
         link.download = `audit_logs.${format}`
         link.click()
       })
-      .catch(() => message.error('导出失败'))
+      .catch(() => message.error(t('admin.audit.exportError')))
   }
 
   return (
     <div>
-      <Title level={3}>审计日志</Title>
+      <Title level={3}>{t('admin.audit.title')}</Title>
 
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <Card>
           <Space wrap>
             <Select
               style={{ width: 140 }}
-              placeholder="事件类型"
+              placeholder={t('admin.audit.phEventType')}
               allowClear
               value={eventType}
               onChange={setEventType}
@@ -118,7 +120,7 @@ export default function Audit() {
             />
             <Select
               style={{ width: 120 }}
-              placeholder="决策"
+              placeholder={t('admin.audit.phDecision')}
               allowClear
               value={decision}
               onChange={setDecision}
@@ -129,16 +131,16 @@ export default function Audit() {
             />
             <Input
               style={{ width: 280 }}
-              placeholder="用户ID（可从角色管理页复制）"
+              placeholder={t('admin.audit.phUserId')}
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
             />
             <Button type="primary" loading={loading} onClick={load}>
-              查询
+              {t('admin.audit.queryBtn')}
             </Button>
-            <Button onClick={() => onExport('csv')}>导出 CSV</Button>
-            <Button onClick={() => onExport('json')}>导出 JSON</Button>
-            <Button onClick={onVerify}>校验审计链完整性</Button>
+            <Button onClick={() => onExport('csv')}>{t('admin.audit.exportCsv')}</Button>
+            <Button onClick={() => onExport('json')}>{t('admin.audit.exportJson')}</Button>
+            <Button onClick={onVerify}>{t('admin.audit.verifyChain')}</Button>
           </Space>
         </Card>
 
@@ -148,8 +150,8 @@ export default function Audit() {
             showIcon
             message={
               verification.ok
-                ? `审计链完整，已校验 ${verification.rows_checked} 条记录，未发现篡改`
-                : `审计链在第 ${verification.broken_at_id} 条记录处断裂：${verification.reason}`
+                ? t('admin.audit.chainOk', { count: verification.rows_checked })
+                : t('admin.audit.chainBroken', { id: verification.broken_at_id, reason: verification.reason })
             }
           />
         )}
@@ -160,24 +162,24 @@ export default function Audit() {
           dataSource={logs}
           onRow={(row) => ({ onClick: () => setSelected(row) })}
           columns={[
-            { title: 'ID', dataIndex: 'id', width: 70 },
-            { title: '时间', dataIndex: 'created_at', width: 180 },
-            { title: '事件', dataIndex: 'event_type' },
+            { title: t('admin.audit.colId'), dataIndex: 'id', width: 70 },
+            { title: t('admin.audit.colTime'), dataIndex: 'created_at', width: 180 },
+            { title: t('admin.audit.colEvent'), dataIndex: 'event_type' },
             {
-              title: '决策',
+              title: t('admin.audit.colDecision'),
               dataIndex: 'decision',
               render: (v: string) =>
                 v === 'deny' ? <Tag color="red">deny</Tag> : <Tag color="green">allow</Tag>,
             },
-            { title: '查询内容', dataIndex: 'query_text', ellipsis: true },
-            { title: '拒绝原因', dataIndex: 'deny_reason', ellipsis: true },
-            { title: '延迟(ms)', dataIndex: 'latency_ms', width: 90 },
+            { title: t('admin.audit.colQuery'), dataIndex: 'query_text', ellipsis: true },
+            { title: t('admin.audit.colDenyReason'), dataIndex: 'deny_reason', ellipsis: true },
+            { title: t('admin.audit.colLatency'), dataIndex: 'latency_ms', width: 90 },
           ]}
         />
       </Space>
 
       <Drawer
-        title={`审计日志详情 #${selected?.id ?? ''}`}
+        title={t('admin.audit.drawerTitle', { id: selected?.id ?? '' })}
         open={!!selected}
         onClose={() => setSelected(null)}
         width={480}

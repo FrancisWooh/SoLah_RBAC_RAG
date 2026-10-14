@@ -30,7 +30,7 @@ H01,hr/Leave_Policy_Admin_Guide.docx,docx,HR,,hr_manager,2,Internal,hr,v1.0,acti
 H02,hr/Compensation_Bands.xlsx,xlsx,HR,,hr_manager,3,Confidential,hr,v1.0,active,7763
 H03,hr/Performance_Review_Guide.docx,docx,HR,,hr_manager,2,Internal,hr,v1.0,active,38816
 H04,hr/Onboarding_Checklist.md,md,HR,,hr_manager,2,Internal,hr,v1.0,active,3333
-H05,hr/Remote_Work_Policy.pdf,pdf,HR,,employee,1,Public/Employee,-,v1.0,active,5041
+H05,hr/Remote_Work_Policy.pdf,pdf,HR,,employee,2,Internal,-,v1.0,active,5041
 M01,marketing/Brand_Guidelines.pdf,pdf,Marketing,,employee,1,Public/Employee,-,v1.0,active,5865
 M02,marketing/Campaign_Plan_VN_Launch.pptx,pptx,Marketing,,marketing_manager,2,Internal,-,v1.0,active,48693
 M03,marketing/Competitor_Analysis_2026.pdf,pdf,Marketing,,marketing_manager;account_manager;exec,2,Internal,-,v1.0,active,5905
@@ -49,6 +49,7 @@ J02,projects/proj_merger/Valuation_Model.xlsx,xlsx,Projects,proj_merger,proj_mer
 J03,projects/proj_mas_audit/Evidence_Index.xlsx,xlsx,Projects,proj_mas_audit,proj_mas_audit,2,Internal,-,v1.0,active,9309
 J04,projects/proj_card_launch_vn/Licensing_Notes.docx,docx,Projects,proj_card_launch_vn,proj_card_launch_vn,2,Internal,-,v1.0,active,39108
 J05,projects/proj_aml_upgrade/Design_Doc.md,md,Projects,proj_aml_upgrade,proj_aml_upgrade,2,Internal,-,v1.0,active,5696
+J06,projects/proj_merger/Project_Risk_Register.xlsx,xlsx,Projects,proj_merger,proj_merger,3,Confidential,-,v1.0,active,8081
 X01,executive/Board_Minutes_Q3.pdf,pdf,Executive,,exec,4,Secret,board,v1.0,active,6750
 X02,executive/Exec_Compensation.xlsx,xlsx,Executive,,exec;hr_manager,4,Secret,hr;board,v1.0,active,8444
 X03,executive/Strategy_FY2027.pptx,pptx,Executive,,exec,3,Confidential,-,v1.0,active,52621

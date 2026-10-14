@@ -34,6 +34,7 @@ export interface NasConfig {
 export interface DataSourceItem {
   id: number
   name: string
+  nameKey?: string
   type: SourceType
   status: SourceStatus
   recordCount: number
@@ -43,11 +44,11 @@ export interface DataSourceItem {
   nas?: NasConfig
 }
 
-export const STATUS_META: Record<SourceStatus, { color: string; text: string }> = {
-  ok: { color: 'green', text: '正常' },
-  warning: { color: 'orange', text: '有警告' },
-  error: { color: 'red', text: '同步失败' },
-  pending: { color: 'default', text: '待同步' },
+export const STATUS_META: Record<SourceStatus, { color: string; textKey: string }> = {
+  ok: { color: 'green', textKey: 'admin.mockData.statusOk' },
+  warning: { color: 'orange', textKey: 'admin.mockData.statusWarning' },
+  error: { color: 'red', textKey: 'admin.mockData.statusError' },
+  pending: { color: 'default', textKey: 'admin.mockData.statusPending' },
 }
 
 export const ROLE_OPTIONS = [
@@ -75,7 +76,7 @@ const dept = (
 
 const INITIAL: DataSourceItem[] = [
   {
-    id: 1, name: 'NAS 文档库', type: 'nas', status: 'ok', recordCount: 53, lastSyncAt: '2026-10-06 10:40:03',
+    id: 1, name: 'NAS Document Library', nameKey: 'admin.mockData.nasLibName', type: 'nas', status: 'ok', recordCount: 53, lastSyncAt: '2026-10-06 10:40:03',
     nas: { rootPath: '/data', scanIntervalSec: 60 },
   },
   dept(2, 'HR Database', 'hr_db', 'hr_manager', 12),
