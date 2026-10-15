@@ -90,7 +90,7 @@ $COMPOSE --env-file .env.prod up -d
 # --- Wait for backend health ---
 echo "==> Waiting for backend /health"
 for i in $(seq 1 120); do
-  if $COMPOSE exec -T backend curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
+  if $COMPOSE exec -T backend python -c "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')" >/dev/null 2>&1; then
     echo "    Backend ready"
     break
   fi
