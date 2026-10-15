@@ -101,7 +101,10 @@ services:
       - ./frontend/.env
     environment:
       VITE_API_BASE_URL: ${PUBLIC_URL:-https://aspire.5gbulab.tech}
-    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173", "--allowedHosts", "aspire.5gbulab.tech"]
+    environment:
+      VITE_API_BASE_URL: ${PUBLIC_URL:-https://aspire.5gbulab.tech}
+      VITE_ALLOWED_HOSTS: aspire.5gbulab.tech
+    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
     restart: unless-stopped
     depends_on:
       - backend
@@ -114,7 +117,8 @@ services:
       - ./frontend/.env
     environment:
       VITE_API_BASE_URL: ${PUBLIC_URL:-https://aspire.5gbulab.tech}
-    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5174", "--mode", "admin", "--allowedHosts", "aspire.5gbulab.tech"]
+      VITE_ALLOWED_HOSTS: aspire.5gbulab.tech
+    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5174", "--mode", "admin"]
     restart: unless-stopped
     depends_on:
       - backend
