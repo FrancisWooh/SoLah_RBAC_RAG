@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     embedding_backend: str = "mock"  # "local" | "hunyuan" | "mock"
     local_embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
     embedding_cache_path: str = ".embed_cache.sqlite"
+    embedding_batch_size: int = 4  # texts per local-embedder forward pass; lower = less peak RAM, slower ingestion
+    embedding_max_seq_length: int = 1024  # tokens kept per text (table chunks reach ~950); lower = less RAM but truncates
     retrieve_k: int = 10  # candidates fetched from the vector store
     serve_floor: float = 0.40  # chunks down to this score may fill the context once the query clears relevance_threshold
     serve_k: int = 5  # best candidates (above the relevance bar) given to the LLM

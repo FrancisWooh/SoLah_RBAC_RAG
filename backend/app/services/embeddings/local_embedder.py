@@ -37,10 +37,10 @@ class LocalEmbedder:
                 self.model_name, truncate_dim=self.dim,
                 model_kwargs={"torch_dtype": torch.float32},
             )
-        self._model.max_seq_length = 1024  # table chunks reach ~950 tokens
+        self._model.max_seq_length = settings.embedding_max_seq_length  # table chunks reach ~950 tokens
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        vecs = self._model.encode(texts, batch_size=16, normalize_embeddings=True)
+        vecs = self._model.encode(texts, batch_size=settings.embedding_batch_size, normalize_embeddings=True)
         return [v.tolist() for v in vecs]
 
     def embed_query(self, text: str) -> list[float]:
