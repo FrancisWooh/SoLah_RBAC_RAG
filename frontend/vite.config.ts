@@ -5,6 +5,6 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   preview: {
-    allowedHosts: ['aspire.5gbulab.tech'],
+    allowedHosts: ['aspire.5gbulab.tech', 'admin.aspire.5gbulab.tech'],
   },
 })

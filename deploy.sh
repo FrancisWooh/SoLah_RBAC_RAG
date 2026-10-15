@@ -130,7 +130,7 @@ cat <<EOF
 
 ==================== Deployment Complete ====================
 Frontend:   ${PUBLIC_URL}
-Admin:      ${PUBLIC_URL}:443  (via admin.* subdomain)
+Admin:      https://admin.aspire.5gbulab.tech
 API docs:   ${PUBLIC_URL}/docs
 Health:     ${PUBLIC_URL}/health
 
