@@ -89,13 +89,13 @@ $COMPOSE --env-file .env.prod up -d
 
 # --- Wait for backend health ---
 echo "==> Waiting for backend /health"
-for i in $(seq 1 120); do
+for i in $(seq 1 600); do
   if $COMPOSE exec -T backend python -c "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')" >/dev/null 2>&1; then
     echo "    Backend ready"
     break
   fi
-  if [ $i -eq 120 ]; then
-    echo "ERROR: Backend not ready within 120s. Check: $COMPOSE logs backend"
+  if [ $i -eq 600 ]; then
+    echo "ERROR: Backend not ready within 600s. Check: $COMPOSE logs backend"
     exit 1
   fi
   sleep 1
