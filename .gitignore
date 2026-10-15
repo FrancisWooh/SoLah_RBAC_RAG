@@ -20,3 +20,7 @@ requirement/claudkey.txt
 requirement/claudekey.txt
 requirement/workbuddy/mcp.json
 requirement/workbuddy/audit_token.txt
+
+# Production
+.env.prod
+nginx/ssl/*.pem

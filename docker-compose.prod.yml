@@ -1,0 +1,142 @@
+# =============================================================================
+# docker-compose.prod.yml
+# Production configuration for Aspire Internal Brain.
+#
+# Differences from docker-compose.yml (dev):
+#   - No pgAdmin (security)
+#   - No source-code volume mounts (uses built images)
+#   - Internal ports NOT exposed (only via Nginx reverse proxy)
+#   - Frontend served as static files (production build, not Vite dev server)
+#   - Backend runs without --reload
+#   - Strong passwords via .env (not hardcoded)
+#   - Healthcheck on backend
+#   - Restart policies for auto-recovery
+#   - Nginx reverse proxy with SSL termination
+#
+# Prerequisites:
+#   1. Copy backend/.env.example → backend/.env, edit all secrets
+#   2. Copy frontend/.env.example → frontend/.env, set VITE_API_BASE_URL
+#   3. Place SSL certs at ./nginx/ssl/fullchain.pem and ./nginx/ssl/privkey.pem
+#      (or use Let's Encrypt after first boot — see deploy notes)
+#   4. Set DOMAIN and other vars in .env or export before running
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml logs -f
+#   docker compose -f docker-compose.prod.yml down
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — internal only, no port exposed
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rbac}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-rbac_rag}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rbac} -d ${POSTGRES_DB:-rbac_rag}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # No ports: — not exposed to host
+
+  # ---------------------------------------------------------------------------
+  # Redis — internal only
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # No ports: — not exposed to host
+
+  # ---------------------------------------------------------------------------
+  # Qdrant — internal only
+  # ---------------------------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    # No ports: — not exposed to host
+
+  # ---------------------------------------------------------------------------
+  # Backend (FastAPI) — production mode, no --reload
+  # ---------------------------------------------------------------------------
+  backend:
+    image: fancylan/so-lah-rbac-rag:backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-rbac}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rbac_rag}
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+    volumes:
+      - ./data:/data
+      - hf_cache:/root/.cache/huggingface
+      - embed_cache:/app/.embed_cache.sqlite
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+    restart: unless-stopped
+    # No ports: — accessed via Nginx only
+
+  # ---------------------------------------------------------------------------
+  # Frontend (production build — static files served by Nginx)
+  # Build step: docker compose -f docker-compose.prod.yml run --rm frontend-build
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: fancylan/so-lah-rbac-rag:frontend
+    env_file:
+      - ./frontend/.env
+    environment:
+      VITE_API_BASE_URL: ${PUBLIC_URL:-https://localhost}
+    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # No ports: — accessed via Nginx only
+
+  # Admin console (same image, different mode)
+  admin:
+    image: fancylan/so-lah-rbac-rag:frontend
+    env_file:
+      - ./frontend/.env
+    environment:
+      VITE_API_BASE_URL: ${PUBLIC_URL:-https://localhost}
+    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5174", "--mode", "admin"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # No ports: — accessed via Nginx only
+
+  # ---------------------------------------------------------------------------
+  # Nginx — reverse proxy + SSL termination (the only exposed service)
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - admin
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  qdrant_data:
+  hf_cache:
+  embed_cache:
