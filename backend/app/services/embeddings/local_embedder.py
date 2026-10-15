@@ -1,15 +1,16 @@
-"""Local sentence-transformers embedding backend (Qwen3-Embedding-0.6B by
-default; any sentence-transformers model works). No API key needed.
+"""Local sentence-transformers embedding backend.
 
-Qwen3-Embedding is asymmetric: queries get an instruction prefix, documents
-do not. embed_texts() is the document path (ingestion); embed_query() is the
-query path. Callers that only know embed_texts() still work, just with
-slightly lower retrieval quality for queries.
+Default: Qwen3-Embedding-0.6B (asymmetric — queries get an instruction prefix).
+Also supports symmetric models like BAAI/bge-base-zh-v1.5 (no instruction
+prefix needed for queries). Detection is based on model name.
 """
 
 from app.core.config import settings
 
 QUERY_INSTRUCTION = "Given a user question, retrieve the internal company document passages that answer it"
+
+# Models that use instruction prefix for queries (asymmetric)
+ASYMMETRIC_MODELS = {"Qwen/Qwen3-Embedding-0.6B", "Qwen/Qwen3-Embedding-4B", "Qwen/Qwen3-Embedding-8B"}
 
 
 class LocalEmbedder:
@@ -19,12 +20,12 @@ class LocalEmbedder:
 
         self.dim = dim or settings.embedding_dim
         self.model_name = model_name or settings.local_embedding_model
+        self._is_asymmetric = self.model_name in ASYMMETRIC_MODELS
         # Qwen3-Embedding weights are BFloat16; sentence-transformers' encode()
         # feeds float32 input by default, causing a dtype mismatch RuntimeError
         # in the linear layers. Loading with torch_dtype=float32 upcasts the
         # weights once at load time so all subsequent encode() calls are
-        # consistent. (The model is only 0.6B params, so the extra memory is
-        # negligible.)
+        # consistent. For bge models this is harmless (they're already float32).
         try:
             self._model = SentenceTransformer(
                 self.model_name, truncate_dim=self.dim,
@@ -43,6 +44,9 @@ class LocalEmbedder:
         return [v.tolist() for v in vecs]
 
     def embed_query(self, text: str) -> list[float]:
-        prompt = f"Instruct: {QUERY_INSTRUCTION}\nQuery: {text}"
+        if self._is_asymmetric:
+            prompt = f"Instruct: {QUERY_INSTRUCTION}\nQuery: {text}"
+        else:
+            prompt = text
         vec = self._model.encode([prompt], normalize_embeddings=True)[0]
         return vec.tolist()
