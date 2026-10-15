@@ -55,7 +55,7 @@ flowchart LR
     VDB -->|角色/密级预过滤<br/>+ 归档过滤| RET
     RET -->|最终权限校验<br/>不可绕过| GATE{allow / deny}
     GATE -->|deny| U
-    GATE -->|allow: 上下文块| LLM[LLM<br/>Claude / Ollama / mock]
+    GATE -->|allow: 上下文块| LLM[LLM<br/>hy3 / Ollama / mock]
     LLM -->|SSE 流| U
     API --> PG[(PostgreSQL<br/>用户 角色 文档元数据<br/>审计日志哈希链)]
     RBAC --- REDIS[(Redis<br/>有效角色缓存 TTL 30s)]
@@ -88,7 +88,7 @@ cp backend/.env.example backend/.env
 
 | 方式 | 配置 |
 |---|---|
-| **Claude（推荐）** | `LLM_BACKEND=anthropic`，`ANTHROPIC_API_KEY=sk-ant-...`；若 key 未绑定 workspace，再设 `ANTHROPIC_WORKSPACE_ID=wrkspc_...`。默认模型 `claude-sonnet-5-5`。 |
+| **腾讯 hy3（推荐）** | `LLM_BACKEND=openai_compat`，`LLM_BASE_URL=https://tokenhub.tencentmaas.com/v1`，`LLM_MODEL=hy3`，`LLM_API_KEY=<TokenHub API Key>`。通过腾讯 TokenHub 的 OpenAI 兼容端点调用混元 hy3 大模型。 |
 | **本地 Ollama** | 宿主机运行 `ollama pull qwen2.5:7b`；`LLM_BACKEND=openai_compat`，`LLM_BASE_URL=http://host.docker.internal:11434/v1`，`LLM_MODEL=qwen2.5:7b`，`LLM_API_KEY=ollama`。纯 CPU 下一次回答约 20–70 秒。 |
 | **无 LLM（仅检索）** | `LLM_BACKEND=mock`：返回检索到的原文摘录，不生成。 |
 
@@ -131,9 +131,9 @@ cp backend/.env.example backend/.env
 | `VECTOR_BACKEND` | `qdrant` \| `tencent_vectordb` | `qdrant` |
 | `EMBEDDING_BACKEND` | `local` \| `hunyuan` \| `mock` | `local` |
 | `LOCAL_EMBEDDING_MODEL` | `local` 时使用的 sentence-transformers 模型 | `Qwen/Qwen3-Embedding-0.6B`（1024 维） |
-| `LLM_BACKEND` | `anthropic` \| `openai_compat` \| `hunyuan` \| `deepseek` \| `mock` | `anthropic` |
-| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` / `ANTHROPIC_EFFORT` / `ANTHROPIC_WORKSPACE_ID` | Claude 配置 | `claude-sonnet-5-5` / `low` |
-| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | OpenAI 兼容端点（Ollama、TokenHub、vLLM 等） | |
+| `LLM_BACKEND` | `anthropic` \| `openai_compat` \| `hunyuan` \| `deepseek` \| `mock` | `openai_compat`（hy3） |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` / `ANTHROPIC_EFFORT` / `ANTHROPIC_WORKSPACE_ID` | Claude 配置（可选，`LLM_BACKEND=anthropic` 时使用） | `claude-sonnet-5-5` / `low` |
+| `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` | OpenAI 兼容端点（hy3 via TokenHub、Ollama、vLLM 等） | `https://tokenhub.tencentmaas.com/v1` / `hy3` |
 | `OCR_BACKEND` | `tesseract` \| `tencent` | `tesseract` |
 | `RELEVANCE_THRESHOLD` | 相关性门槛：低于它的块不算"有答案" | `0.42` |
 | `DENY_MARGIN` / `DENY_STRONG_SCORE` | "真正的答案是受限的"判定：不看权限的最佳匹配高出 ≥ margin，且用户自己的最佳匹配 < strong 时判为拒绝 | `0.15` / `0.58` |
@@ -215,7 +215,7 @@ docker compose exec backend python seed_vectorstore.py   # 解析 → 切块 →
 2. **切块**：按章节边界切；正文块约 800 字符，表格块约 1500 字符；每块带前缀 `[文档标题 | 部门 | 章节]`。
 3. **向量化**：本地 Qwen3-Embedding-0.6B，1024 维；查询端带检索指令前缀（不加会明显掉点）。embedding 结果按内容哈希缓存。
 4. **检索**：取 `RETRIEVE_K=10` 个候选 → 过相关性门槛 → 给 LLM `SERVE_K=5` 个，并补前两名的相邻块；同一文档的块按原文顺序排列。
-5. **生成**：Claude（或其他后端）只依据 `<document>` 标签内的资料回答，并被告知这些内容是不可信数据；回答末尾标注来源。
+5. **生成**：hy3（或其他后端）只依据 `<document>` 标签内的资料回答，并被告知这些内容是不可信数据；回答末尾标注来源。
 6. **流式**：`POST /api/query/text/stream` 先发 `meta`（判定 + 来源），再发 `delta`（回答文本），最后 `done`。
 7. **审计**：流结束时写入一行（含有效角色、过滤条件、命中文档、判定、延迟）。
 
@@ -264,7 +264,7 @@ docker compose exec backend python seed_vectorstore.py   # 解析 → 切块 →
 
 **被拒时记录"被拦文档"**：用户被拒绝时，系统把不看权限时最相关的那份受限文档的 ID 写进审计日志（`blocked_doc_ids`，纳入哈希链）。它**只出现在审计日志和 MCP 输出里，从不出现在给用户的任何响应中**（有测试覆盖）。
 
-验证：`docker compose exec -T backend python verify_workbuddy_mcp.py`（用官方 MCP 客户端按 WorkBuddy 的方式调用并断言结果）；`python demo_audit_agent.py "问题"`（用 Claude 当替身智能体，检验工具与指令，会产生少量 API 费用）。
+验证：`docker compose exec -T backend python verify_workbuddy_mcp.py`（用官方 MCP 客户端按 WorkBuddy 的方式调用并断言结果）；`python demo_audit_agent.py "问题"`（用 hy3 当替身智能体，检验工具与指令，会产生少量 API 费用）。
 
 ---
 
@@ -333,7 +333,7 @@ docker compose exec backend python -m eval.run_retrieval_eval --out eval/results
 | 现象 | 原因与处理 |
 |---|---|
 | 前台提示"查询失败，请稍后重试" | 看 `docker compose logs backend`。LLM 失败本身会降级为原文摘录，不会走到这里；常见是后端未启动完成或数据库未初始化。 |
-| 回答开头有"（大模型暂时不可用，以下为检索到的原文摘录）" | LLM 调用失败。检查 `ANTHROPIC_API_KEY`、网络；key 未绑定 workspace 时报 400 `anthropic-workspace-id`，设置 `ANTHROPIC_WORKSPACE_ID`。 |
+| 回答开头有"（大模型暂时不可用，以下为检索到的原文摘录）" | LLM 调用失败。检查 `LLM_API_KEY`、`LLM_BASE_URL`、网络；TokenHub 返回 `401006` 时检查模型服务 ID 和 API Key 是否正确。 |
 | 本地 LLM 连不上 | 容器访问宿主机用 `host.docker.internal`（compose 已配置 `extra_hosts`）；确认宿主机 Ollama 在监听 `11434`。 |
 | TokenHub 返回 `401006 服务 ID 不存在` | 模型尚未在控制台开通"在线推理服务"，或 `model` 应填服务 ID 而非模型名。 |
 | 第一次启动很慢 | 下载 embedding 模型 + CPU 上首次向量化约 20 分钟；之后走缓存。 |
@@ -355,7 +355,7 @@ docker compose exec backend python -m eval.run_retrieval_eval --out eval/results
 
 - **语音查询**（`/api/query/audio`）未实现。
 - **数据源管理页**是静态说明页，没有真实的同步任务或数据。
-- **腾讯云适配器**（`hunyuan` embedding / LLM、`tencent_vectordb`、腾讯 OCR）代码已写好，但**从未连接真实账号验证**；TokenHub / 混元服务在本环境下未开通成功。当前实际运行的是：本地 Qwen3 embedding、Claude 或本地 Ollama 生成、Qdrant、Tesseract。
+- **腾讯云适配器**（`hunyuan` embedding / LLM、`tencent_vectordb`、腾讯 OCR）代码已写好。TokenHub 在本环境下已开通：当前实际运行的是本地 Qwen3 embedding、腾讯 hy3 via TokenHub 生成、Qdrant、Tesseract。
 - 腾讯向量库适配器的 `status`（归档）过滤只在 Python 层生效，没有下推到查询表达式；大库下可能少于 `top_k` 个结果。
 - **拒绝措辞是基于相似度分数的启发式**：少数问题会得到"资料不足"的回答而不是明确的"权限不足"（评测里约 11/38 道受限题），此时没有任何受限事实暴露。
 - 英文问题检索中文文档、中文问题检索英文文档都可用，但跨语言的相似度分数偏低，是排名靠后答案块的主要来源。
