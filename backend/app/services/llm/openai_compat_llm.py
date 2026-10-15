@@ -67,10 +67,10 @@ class OpenAICompatLLM:
                 "model": settings.llm_model,
                 "messages": build_messages(question, context_chunks, history),
                 "temperature": 0.2,
-                "max_tokens": 800,
+                "max_tokens": 16384,
                 "stream": True,
             },
-            timeout=180.0,
+            timeout=600.0,
         ) as response:
             response.raise_for_status()
             for line in response.iter_lines():
@@ -79,7 +79,10 @@ class OpenAICompatLLM:
                 payload = line[5:].strip()
                 if payload == "[DONE]":
                     break
-                delta = json.loads(payload)["choices"][0].get("delta", {}).get("content")
+                choices = json.loads(payload).get("choices", [])
+                if not choices:
+                    continue  # hy3 sends a usage-only frame with empty choices at the end
+                delta = choices[0].get("delta", {}).get("content")
                 if delta:
                     yield delta
 
@@ -93,9 +96,9 @@ class OpenAICompatLLM:
                 "model": settings.llm_model,
                 "messages": build_messages(question, context_chunks, history),
                 "temperature": 0.2,
-                "max_tokens": 800,
+                "max_tokens": 16384,
             },
-            timeout=180.0  # local CPU models can take a while,
+            timeout=600.0,
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
