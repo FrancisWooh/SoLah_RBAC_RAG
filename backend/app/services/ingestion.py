@@ -43,8 +43,8 @@ def chunk_document(text: str, max_chars: int = 800, title: str = "") -> list[str
     return [prefix + p for p in pieces] or [prefix.strip()]
 
 
-TEXT_CHUNK_CHARS = 800
-TABLE_CHUNK_CHARS = 1500  # spreadsheet rows are short and related; keep more of a table together
+TEXT_CHUNK_CHARS = 600
+TABLE_CHUNK_CHARS = 800  # keep under bge's 512-token limit
 MIN_SECTION_CHARS = 300  # don't cut a prose chunk at a section boundary before this size
 
 
