@@ -59,7 +59,7 @@ if [ ! -f nginx/ssl/fullchain.pem ] || [ ! -f nginx/ssl/privkey.pem ]; then
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
       -keyout nginx/ssl/privkey.pem \
       -out nginx/ssl/fullchain.pem \
-      -subj "/CN=localhost"
+      -subj "/CN=aspire.5gbulab.tech"
     echo "    Self-signed cert generated (365 days). Replace with real cert for production."
     exit 0
   fi
@@ -124,7 +124,7 @@ fi
 
 # --- Done ---
 source .env.prod 2>/dev/null || true
-PUBLIC_URL="${PUBLIC_URL:-https://localhost}"
+PUBLIC_URL="${PUBLIC_URL:-https://aspire.5gbulab.tech}"
 
 cat <<EOF
 
