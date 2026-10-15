@@ -26,6 +26,8 @@
     "selectAccount": "Select account",
     "submit": "Login",
     "errorNotFound": "Login failed: account does not exist",
+    "errorNetwork": "Cannot reach the server. Check your network and try again.",
+    "errorServer": "Server error ({{status}}). Please try again later.",
     "demoUsers": {
       "alice": "alice — compliance_officer (Clearance 2 · aml)",
       "carol": "carol — compliance_officer + mlro (Clearance 3 · aml)",

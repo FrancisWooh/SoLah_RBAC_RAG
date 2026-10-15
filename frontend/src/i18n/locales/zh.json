@@ -26,6 +26,8 @@
     "selectAccount": "选择账号",
     "submit": "登录",
     "errorNotFound": "登录失败：账号不存在",
+    "errorNetwork": "无法连接服务器，请检查网络或稍后重试",
+    "errorServer": "服务器错误（{{status}}），请稍后重试",
     "demoUsers": {
       "alice": "alice — compliance_officer（密级2 · aml）",
       "carol": "carol — compliance_officer + mlro（密级3 · aml）",

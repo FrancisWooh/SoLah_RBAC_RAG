@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Alert, Button, Card, Form, Select, Typography } from 'antd'
+import { isAxiosError } from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -28,8 +29,11 @@ export default function Login() {
     try {
       await login(values.username)
       navigate(ADMIN_SITE ? '/admin' : '/app/query')
-    } catch {
-      setError(t('login.errorNotFound'))
+    } catch (e) {
+      const status = isAxiosError(e) ? e.response?.status : undefined
+      if (status === 401) setError(t('login.errorNotFound'))
+      else if (status === undefined) setError(t('login.errorNetwork'))
+      else setError(t('login.errorServer', { status }))
     } finally {
       setSubmitting(false)
     }
