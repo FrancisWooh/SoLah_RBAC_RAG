@@ -75,10 +75,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-rbac}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rbac_rag}
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
+      EMBEDDING_CACHE_PATH: /app/.cache/.embed_cache.sqlite
     volumes:
       - ./data:/data
       - hf_cache:/root/.cache/huggingface
-      - embed_cache:/app/.embed_cache.sqlite
+      - embed_cache:/app/.cache
     depends_on:
       postgres:
         condition: service_healthy
