@@ -15,7 +15,7 @@
 #
 # Prerequisites:
 #   1. Copy backend/.env.example → backend/.env, edit all secrets
-#   2. Copy frontend/.env.example → frontend/.env, set VITE_API_BASE_URL
+#   2. (frontend/.env is no longer needed: the API base URL is baked into the image at build time)
 #   3. Place SSL certs at ./nginx/ssl/fullchain.pem and ./nginx/ssl/privkey.pem
 #      (or use Let's Encrypt after first boot — see deploy notes)
 #   4. Set DOMAIN and other vars in .env or export before running
@@ -97,8 +97,6 @@ services:
   # ---------------------------------------------------------------------------
   frontend:
     image: fancylan/so-lah-rbac-rag:frontend
-    env_file:
-      - ./frontend/.env
     environment:
       VITE_API_BASE_URL: ${PUBLIC_URL:-https://aspire.5gbulab.tech}
       VITE_ALLOWED_HOSTS: aspire.5gbulab.tech
@@ -111,8 +109,6 @@ services:
   # Admin console (same image, different mode)
   admin:
     image: fancylan/so-lah-rbac-rag:frontend
-    env_file:
-      - ./frontend/.env
     environment:
       VITE_API_BASE_URL: ${PUBLIC_URL:-https://aspire.5gbulab.tech}
       VITE_ALLOWED_HOSTS: aspire.5gbulab.tech
