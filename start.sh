@@ -52,6 +52,8 @@ if [[ "$USER_COUNT" == "0" ]]; then
   echo "==> 数据库为空，写入种子数据（用户/角色/文档 + 向量库 + 一周审计历史 + 审计哈希链；首次向量化在 CPU 上约需 20 分钟）"
   docker compose exec -T backend python seed_data.py
   docker compose exec -T backend python seed_vectorstore.py
+  # department databases -> data sources; the backend indexes them itself within DB_SYNC_INTERVAL seconds
+  docker compose exec -T backend python seed_dept_databases.py
   docker compose exec -T backend python seed_audit_history.py
   docker compose exec -T backend python backfill_audit_hash_chain.py
 else

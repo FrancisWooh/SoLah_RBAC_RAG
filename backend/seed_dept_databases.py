@@ -14,12 +14,17 @@ Usage: docker compose exec backend python seed_dept_databases.py
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_values
+from sqlalchemy.engine import make_url
 
+from app.core.config import settings
 from app.core.db import SessionLocal
 from app.models.data_source import DataSource
 
-HOST, PORT = "postgres", 5432
-ADMIN = dict(host=HOST, port=PORT, user="rbac", password="rbac")
+# Admin credentials come from DATABASE_URL, so this also works where POSTGRES_PASSWORD was changed
+# (the prod compose). The department databases live on the same server as the app database.
+_url = make_url(settings.database_url)
+HOST, PORT = _url.host or "postgres", _url.port or 5432
+ADMIN = dict(host=HOST, port=PORT, user=_url.username, password=_url.password)
 READER, READER_PW = "rag_reader", "rag_reader"
 
 # (code, title, category, content, clearance, compartment, allowed_roles)

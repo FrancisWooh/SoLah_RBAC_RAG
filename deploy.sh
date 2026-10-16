@@ -115,6 +115,8 @@ if [ "$USER_COUNT" = "0" ]; then
   echo "==> Database empty, seeding data (first-time vectorization ~10-20 min on 4-core)"
   $COMPOSE exec -T backend python seed_data.py
   $COMPOSE exec -T backend python seed_vectorstore.py
+  # department databases -> data sources; the backend indexes them itself within DB_SYNC_INTERVAL seconds
+  $COMPOSE exec -T backend python seed_dept_databases.py
   $COMPOSE exec -T backend python seed_audit_history.py
   $COMPOSE exec -T backend python backfill_audit_hash_chain.py
   echo "    Seeding complete"
