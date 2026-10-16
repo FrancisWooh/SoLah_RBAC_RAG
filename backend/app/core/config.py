@@ -48,6 +48,15 @@ class Settings(BaseSettings):
     db_sync_interval: int = 30  # seconds between syncs of the registered department databases (data_sources); 0 disables
     embedding_dim: int = 1024  # matches hunyuan-embedding so swapping backends needs no collection rebuild
 
+    # Tencent COS: private bucket holding the original documents (same layout as data/).
+    # Used only to hand out short-lived presigned links after an RBAC check; empty bucket = feature off.
+    cos_secret_id: str = ""
+    cos_secret_key: str = ""
+    cos_region: str = ""
+    cos_bucket: str = ""
+    cos_prefix: str = "data/"  # object-key prefix; key = prefix + path relative to the library root
+    cos_url_expire_seconds: int = 300
+
     tencent_secret_id: str = ""
     tencent_secret_key: str = ""
     tencent_vectordb_url: str = ""

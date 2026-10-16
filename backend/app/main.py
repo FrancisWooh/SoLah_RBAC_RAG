@@ -10,6 +10,7 @@ from app.api.admin_dashboard import router as admin_dashboard_router
 from app.api.admin_library import router as admin_library_router
 from app.api.admin_roles import router as admin_roles_router
 from app.api.chat import router as chat_router
+from app.api.documents import router as documents_router
 from app.api.auth import router as auth_router
 from app.api.query import router as query_router
 from app.api.role_requests import router as role_requests_router
@@ -70,6 +71,7 @@ def health():
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(query_router, prefix="/api/query", tags=["query"])
 app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
+app.include_router(documents_router, prefix="/api/documents", tags=["documents"])
 app.include_router(admin_roles_router, prefix="/api/admin", tags=["admin-roles"])
 app.include_router(admin_audit_router, prefix="/api/admin/audit", tags=["admin-audit"])
 app.include_router(admin_dashboard_router, prefix="/api/admin/dashboard", tags=["admin-dashboard"])

@@ -14,6 +14,7 @@ import {
 import { Alert, Dropdown, Modal, Popconfirm, Tag, message } from 'antd'
 import type { UploadRequestOption } from '@rc-component/upload'
 import { Upload } from 'antd'
+import { isAxiosError } from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -374,6 +375,21 @@ function inlineFilenames(text: string, names: Map<string, string>): string {
   })
 }
 
+/** Open the original file behind a citation. The window is opened synchronously (inside the
+ *  click) so popup blockers allow it, then pointed at the short-lived link the API returns
+ *  after its own permission check. */
+async function openSource(docId: string, t: (k: string) => string) {
+  const win = window.open('', '_blank')
+  try {
+    const { data } = await apiClient.get<{ url: string }>(`/api/documents/${encodeURIComponent(docId)}/link`)
+    if (win) win.location.href = data.url
+    else window.location.href = data.url
+  } catch (e) {
+    win?.close()
+    message.error(isAxiosError(e) && e.response?.status === 503 ? t('query.sourceNotConfigured') : t('query.sourceUnavailable'))
+  }
+}
+
 function AssistantMessage({ turn, streaming, waiting }: { turn: Turn; streaming: boolean; waiting: boolean }) {
   const { t } = useTranslation()
 
@@ -410,7 +426,9 @@ function AssistantMessage({ turn, streaming, waiting }: { turn: Turn; streaming:
         <div className="msg-sources">
           <span>{t('query.sources')}</span>
           {sources.map(([id, name]) => (
-            <Tag key={id}>{name}</Tag>
+            <Tag key={id} style={{ cursor: 'pointer' }} title={t('query.viewSource')} onClick={() => void openSource(id, t)}>
+              {name}
+            </Tag>
           ))}
         </div>
       )}
