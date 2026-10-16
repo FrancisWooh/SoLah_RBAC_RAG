@@ -105,6 +105,13 @@ done
 echo "==> Running database migration"
 $COMPOSE exec -T backend alembic upgrade head
 
+# --- Document library: data/ is not in git, it is mirrored from the COS bucket ---
+if [ ! -f data/manifest.json ]; then
+  echo "==> data/ is empty: downloading the document library from COS"
+  $COMPOSE exec -T backend python sync_data_from_cos.py || {
+    echo "ERROR: could not download the document library. Check COS_* in backend/.env"; exit 1; }
+fi
+
 # --- Seed data (only if DB is empty) ---
 USER_COUNT=$($COMPOSE exec -T postgres psql \
   -U "${POSTGRES_USER:-rbac}" -d "${POSTGRES_DB:-rbac_rag}" \
@@ -138,6 +145,7 @@ Health:     ${PUBLIC_URL}/health
 
 Login:      Visit frontend, select a mock SSO account
 
+Library:    ./install_cos_sync_cron.sh   (keep data/ in step with the COS bucket)
 Logs:       $COMPOSE logs -f backend
 Stop:       $COMPOSE down
 Restart:    $COMPOSE restart

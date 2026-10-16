@@ -120,6 +120,16 @@ cp backend/.env.example backend/.env
 
 ---
 
+## 文档库（COS）
+
+`data/` **不再由 git 管理**。文档（含 `manifest.json`）放在**私有**的腾讯云 COS 桶里，并镜像到本地 `./data`（系统实际索引的就是它）。
+
+- **更新文档**：直接在桶里上传 / 替换 / 删除（目录结构与 `data/` 相同，包括 `manifest.json`）。
+- **同步到 VM**：`./install_cos_sync_cron.sh` 安装每 5 分钟一次的定时任务，在后端容器里执行 `python sync_data_from_cos.py`：新增、变更的文件会下载，COS 里已删除的文件会在本地删除，随后文档库监听器在 `LIBRARY_SYNC_INTERVAL` 秒内重新索引。也可手动执行，加 `--dry-run` 只预览。
+- **安全保护**：桶为空或没有 `manifest.json` 时拒绝同步；一次要删除的本地文件超过 `--max-delete`（默认 3）个时拒绝删除，确认无误后加 `--force`。
+- **首次部署**：`data/manifest.json` 不存在时，`deploy.sh` 会自动从 COS 下载。
+- 回答下方的"查看原文"是 `GET /api/documents/{id}/link` 在通过与检索相同的权限校验后签发的短时效链接，桶必须保持私有。
+
 ## 配置参考
 
 配置在 `backend/.env`（容器通过 `env_file` 读取）。`backend/.env.example` 是推荐的起点；`app/core/config.py` 中的默认值（多为 `mock`）只在变量缺失时生效。

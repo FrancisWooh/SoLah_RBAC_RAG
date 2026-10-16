@@ -117,6 +117,21 @@ On the login page, select a mock SSO account (no password). The backend pre-warm
 
 ---
 
+## Document Library in COS
+
+`data/` is **not in git**. The documents (and `manifest.json`) live in a **private** Tencent COS bucket and are mirrored into `./data`, which is what gets indexed.
+
+| Setting (`backend/.env`) | Meaning |
+|---|---|
+| `COS_SECRET_ID` / `COS_SECRET_KEY` | A sub-account limited to this bucket (read-only is enough) |
+| `COS_REGION` / `COS_BUCKET` / `COS_PREFIX` | e.g. `ap-singapore` / `<name>-<appid>` / `data/` |
+
+- **Update documents:** upload / replace / delete them in the bucket (same folder layout as `data/`, including `manifest.json`).
+- **Sync into the VM:** `./install_cos_sync_cron.sh` installs a cron job (every 5 minutes) running `python sync_data_from_cos.py` in the backend container. New and changed files are downloaded, files deleted in COS are deleted locally, then the library watcher re-indexes within `LIBRARY_SYNC_INTERVAL` seconds. Run it by hand, or with `--dry-run`, from `docker compose exec -T backend python sync_data_from_cos.py`.
+- **Safety:** it refuses to run on an empty bucket or one without `manifest.json`, and refuses to delete more than `--max-delete` (default 3) local files in one run unless `--force`.
+- **First deployment:** `deploy.sh` downloads the library automatically when `data/manifest.json` is missing.
+- **"View original" links** under answers are short-lived presigned URLs issued by `GET /api/documents/{id}/link` after the same RBAC check as retrieval; keep the bucket private.
+
 ## Configuration Reference
 
 Configuration is in `backend/.env` (read by containers via `env_file`). `backend/.env.example` is the recommended starting point; defaults in `app/core/config.py` (mostly `mock`) apply only when variables are missing.

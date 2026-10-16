@@ -24,3 +24,6 @@ requirement/workbuddy/audit_token.txt
 # Production
 .env.prod
 nginx/ssl/*.pem
+
+# Document library: lives in the COS bucket and is mirrored into ./data (sync_data_from_cos.py)
+data/
