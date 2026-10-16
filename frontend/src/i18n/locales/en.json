@@ -71,6 +71,8 @@
     "generatingAnswer": "Generating answer...",
     "sources": "Sources:",
     "viewSource": "Click to view the original",
+    "viewRecord": "Click to view the database record",
+    "recordNote": "The database record text used for this answer:",
     "sourceUnavailable": "Cannot open the original (not found or no access)",
     "sourceNotConfigured": "Original-file storage is not configured; contact an administrator",
     "noAccess": "No permission to access this content",

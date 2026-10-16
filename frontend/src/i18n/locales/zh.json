@@ -71,6 +71,8 @@
     "generatingAnswer": "正在生成回答…",
     "sources": "来源：",
     "viewSource": "点击查看原文",
+    "viewRecord": "点击查看数据库记录内容",
+    "recordNote": "以下是回答所引用的数据库记录原文：",
     "sourceUnavailable": "无法打开原文（文档不存在或无权访问）",
     "sourceNotConfigured": "原文存储未配置，请联系管理员",
     "noAccess": "无权限访问该内容",

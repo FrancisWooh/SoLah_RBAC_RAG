@@ -12,6 +12,7 @@ class CitationResponse(BaseModel):
     doc_id: str
     snippet: str
     filename: str | None = None
+    source_type: str | None = None  # 'file' | 'db'
 
 
 class QueryResponse(BaseModel):

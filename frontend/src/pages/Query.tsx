@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowUpOutlined,
+  DatabaseOutlined,
   DeleteOutlined,
+  FileTextOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -368,7 +370,7 @@ export default function Query() {
 /** Swap inline `[doc_id]` / `【doc_id,第7节】` citations for the real file name
  *  (ids come from the turn's citations; unknown ids are left untouched). */
 function inlineFilenames(text: string, names: Map<string, string>): string {
-  return text.replace(/[[【]\s*(doc_[\w-]+)\s*(?:[,，]\s*([^\]】]*))?[\]】]/g, (m, id: string, extra?: string) => {
+  return text.replace(/[[【]\s*((?:doc|db)_[\w-]+)\s*(?:[,，]\s*([^\]】]*))?[\]】]/g, (m, id: string, extra?: string) => {
     const name = names.get(id)
     if (!name) return m
     return `[${name.replace(/_/g, '\\_')}${extra ? `，${extra.trim()}` : ''}]`
@@ -388,6 +390,49 @@ async function openSource(docId: string, t: (k: string) => string) {
     win?.close()
     message.error(isAxiosError(e) && e.response?.status === 503 ? t('query.sourceNotConfigured') : t('query.sourceUnavailable'))
   }
+}
+
+/** Strip the "[title | department | category]" prefix the indexer adds to every chunk. */
+function stripChunkPrefix(snippet: string): string {
+  return snippet.replace(/^\[[^\]\n]*\]\n?/, '')
+}
+
+/** Source tags under an answer. A file opens in a new tab (the API checks permission and hands out a
+ *  short-lived link); a database record has no file, so it opens the record text that was retrieved. */
+function SourceTags({ citations }: { citations: ChatCitation[] }) {
+  const { t } = useTranslation()
+  const [record, setRecord] = useState<{ name: string; snippets: string[] } | null>(null)
+  const sources = [...new Map(citations.map((c) => [c.doc_id, c])).values()]
+  return (
+    <div className="msg-sources">
+      <span>{t('query.sources')}</span>
+      {sources.map((c) => {
+        const isDb = c.source_type === 'db'
+        const name = c.filename || c.doc_id
+        return (
+          <Tag
+            key={c.doc_id}
+            icon={isDb ? <DatabaseOutlined /> : <FileTextOutlined />}
+            style={{ cursor: 'pointer' }}
+            title={isDb ? t('query.viewRecord') : t('query.viewSource')}
+            onClick={() =>
+              isDb
+                ? setRecord({ name, snippets: citations.filter((x) => x.doc_id === c.doc_id).map((x) => stripChunkPrefix(x.snippet)) })
+                : void openSource(c.doc_id, t)
+            }
+          >
+            {name}
+          </Tag>
+        )
+      })}
+      <Modal title={record?.name} open={record !== null} onCancel={() => setRecord(null)} footer={null} width={640} destroyOnClose>
+        <p style={{ color: '#888' }}>{t('query.recordNote')}</p>
+        {record?.snippets.map((sn, i) => (
+          <div key={i} style={{ whiteSpace: 'pre-wrap', marginBottom: 12 }}>{sn}</div>
+        ))}
+      </Modal>
+    </div>
+  )
 }
 
 function AssistantMessage({ turn, streaming, waiting }: { turn: Turn; streaming: boolean; waiting: boolean }) {
@@ -422,16 +467,7 @@ function AssistantMessage({ turn, streaming, waiting }: { turn: Turn; streaming:
         {turn.content ? <ReactMarkdown>{inlineFilenames(turn.content, names)}</ReactMarkdown> : waiting ? t('query.generatingAnswer') : ''}
         {streaming && turn.content ? <span className="answer-cursor">▍</span> : null}
       </div>
-      {sources.length > 0 && (
-        <div className="msg-sources">
-          <span>{t('query.sources')}</span>
-          {sources.map(([id, name]) => (
-            <Tag key={id} style={{ cursor: 'pointer' }} title={t('query.viewSource')} onClick={() => void openSource(id, t)}>
-              {name}
-            </Tag>
-          ))}
-        </div>
-      )}
+      {sources.length > 0 && <SourceTags citations={turn.citations ?? []} />}
     </div>
   )
 }

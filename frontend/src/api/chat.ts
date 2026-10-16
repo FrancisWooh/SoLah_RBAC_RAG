@@ -4,6 +4,7 @@ export interface ChatCitation {
   doc_id: string
   snippet: string
   filename?: string | null
+  source_type?: 'file' | 'db' | null
 }
 
 export interface ChatSessionSummary {

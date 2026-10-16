@@ -2,7 +2,8 @@
 RBAC as retrieval, answer 404 (never 403) so restricted documents' existence is
 not confirmed, skip archived/non-file documents, and leave an audit trail.
 
-Uses the seeded demo users/documents (henry = hr_manager, alice = compliance).
+Uses the seeded demo users (henry = hr_manager, alice = compliance); documents are created per test so the
+result does not depend on which versions the library sync has archived.
 COS itself is faked: only the permission logic is under test.
 """
 
@@ -15,12 +16,13 @@ from app.models.audit_log import AuditLog
 from app.models.document import Document
 from app.services import cos_storage
 
-HR_DOC = "doc_h01"  # hr/Leave_Policy_Admin_Guide.docx: hr_manager, clearance 2, compartment hr
+HR_DOC = "doc_t_hr_policy"  # created per test: hr_manager, clearance 2, compartment hr (like the real HR files)
 
 
 @pytest.fixture()
 def client(db_session, test_client, monkeypatch):
     app.dependency_overrides[get_db] = lambda: db_session
+    _add_doc(db_session, HR_DOC, source_ref="/company_share/hr/T_Leave_Policy.docx", roles=("hr_manager",), clearance=2, compartments=("hr",))
     monkeypatch.setattr(cos_storage, "is_configured", lambda: True)
     monkeypatch.setattr(
         cos_storage, "presigned_url", lambda key, filename: f"https://cos.example/{key}?sig=fake"
@@ -56,8 +58,8 @@ def test_entitled_user_gets_a_link_to_the_right_object(client):
 
     assert resp.status_code == 200, resp.text
     body = resp.json()
-    assert body["filename"] == "Leave_Policy_Admin_Guide.docx"
-    assert body["url"].startswith("https://cos.example/") and "hr/Leave_Policy_Admin_Guide.docx" in body["url"]
+    assert body["filename"] == "T_Leave_Policy.docx"
+    assert body["url"].startswith("https://cos.example/") and "hr/T_Leave_Policy.docx" in body["url"]
 
 
 def test_user_without_the_role_and_compartment_gets_404_not_403(client):
